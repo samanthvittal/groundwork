@@ -2,6 +2,7 @@
 
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 if TYPE_CHECKING:
     from groundwork.auth.models import User
@@ -25,7 +26,7 @@ class AuthProvider(ABC):
         password: str,
         first_name: str,
         last_name: str,
-        role_id: str,
+        role_id: UUID,
     ) -> "User":
         """Create a new user."""
         ...

@@ -1,7 +1,5 @@
 """Tests for database module."""
 
-import pytest
-
 
 def test_base_class_exists() -> None:
     """Base declarative class should be importable."""

@@ -46,8 +46,7 @@ def mock_settings() -> MagicMock:
 async def test_liveness_returns_ok(app: FastAPI) -> None:
     """GET /health/live should return status ok."""
     async with AsyncClient(
-        transport=ASGITransport(app=app),
-        base_url="http://test"
+        transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         response = await client.get("/health/live")
 
@@ -64,8 +63,7 @@ async def test_readiness_returns_ok_when_db_healthy(
 
     with patch("groundwork.health.services.get_settings", return_value=mock_settings):
         async with AsyncClient(
-            transport=ASGITransport(app=app),
-            base_url="http://test"
+            transport=ASGITransport(app=app), base_url="http://test"
         ) as client:
             response = await client.get("/health/ready")
 
@@ -82,8 +80,7 @@ async def test_readiness_returns_503_when_db_unhealthy(
 
     with patch("groundwork.health.services.get_settings", return_value=mock_settings):
         async with AsyncClient(
-            transport=ASGITransport(app=app),
-            base_url="http://test"
+            transport=ASGITransport(app=app), base_url="http://test"
         ) as client:
             response = await client.get("/health/ready")
 
@@ -100,8 +97,7 @@ async def test_details_returns_healthy_details(
 
     with patch("groundwork.health.services.get_settings", return_value=mock_settings):
         async with AsyncClient(
-            transport=ASGITransport(app=app),
-            base_url="http://test"
+            transport=ASGITransport(app=app), base_url="http://test"
         ) as client:
             response = await client.get("/health/details")
 
@@ -122,8 +118,7 @@ async def test_details_returns_degraded_when_db_unhealthy(
 
     with patch("groundwork.health.services.get_settings", return_value=mock_settings):
         async with AsyncClient(
-            transport=ASGITransport(app=app),
-            base_url="http://test"
+            transport=ASGITransport(app=app), base_url="http://test"
         ) as client:
             response = await client.get("/health/details")
 

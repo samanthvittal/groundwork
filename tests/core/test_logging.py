@@ -3,8 +3,6 @@
 import json
 import logging
 
-import pytest
-
 
 def test_json_formatter_formats_as_json() -> None:
     """JSONFormatter should output valid JSON."""

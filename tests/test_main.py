@@ -4,7 +4,9 @@ import os
 import sys
 
 # Set required environment variables BEFORE any imports that could trigger Settings
-os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://test:test@localhost:5432/test")
+os.environ.setdefault(
+    "DATABASE_URL", "postgresql+asyncpg://test:test@localhost:5432/test"
+)
 os.environ.setdefault("SECRET_KEY", "test-secret-key-for-testing-only")
 
 import pytest
@@ -41,8 +43,7 @@ async def test_health_live_endpoint_accessible() -> None:
     app = create_app()
 
     async with AsyncClient(
-        transport=ASGITransport(app=app),
-        base_url="http://test"
+        transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         response = await client.get("/health/live")
 
@@ -57,8 +58,7 @@ async def test_request_id_middleware_adds_header() -> None:
     app = create_app()
 
     async with AsyncClient(
-        transport=ASGITransport(app=app),
-        base_url="http://test"
+        transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         response = await client.get("/health/live")
 

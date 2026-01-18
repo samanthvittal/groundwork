@@ -3,7 +3,7 @@
 import json
 import logging
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 
@@ -11,17 +11,37 @@ class JSONFormatter(logging.Formatter):
     """Format log records as JSON."""
 
     # Fields to exclude from extra data
-    EXCLUDE_FIELDS = frozenset({
-        "name", "msg", "args", "created", "filename", "funcName",
-        "levelname", "levelno", "lineno", "module", "msecs", "pathname",
-        "process", "processName", "relativeCreated", "stack_info",
-        "exc_info", "exc_text", "thread", "threadName", "taskName", "message",
-    })
+    EXCLUDE_FIELDS = frozenset(
+        {
+            "name",
+            "msg",
+            "args",
+            "created",
+            "filename",
+            "funcName",
+            "levelname",
+            "levelno",
+            "lineno",
+            "module",
+            "msecs",
+            "pathname",
+            "process",
+            "processName",
+            "relativeCreated",
+            "stack_info",
+            "exc_info",
+            "exc_text",
+            "thread",
+            "threadName",
+            "taskName",
+            "message",
+        }
+    )
 
     def format(self, record: logging.LogRecord) -> str:
         """Format a log record as JSON."""
         log_data: dict[str, Any] = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),

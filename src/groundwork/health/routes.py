@@ -1,5 +1,7 @@
 """Health check API routes."""
 
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -8,6 +10,8 @@ from groundwork.health.schemas import HealthDetails, HealthStatus
 from groundwork.health.services import HealthService
 
 router = APIRouter()
+
+DbDep = Annotated[AsyncSession, Depends(get_db)]
 
 
 @router.get("/live", response_model=HealthStatus)
@@ -19,7 +23,7 @@ async def liveness() -> HealthStatus:
 @router.get("/ready", response_model=HealthStatus)
 async def readiness(
     response: Response,
-    db: AsyncSession = Depends(get_db),
+    db: DbDep,
 ) -> HealthStatus:
     """Readiness probe - app is ready to serve traffic."""
     service = HealthService(db)
@@ -31,7 +35,7 @@ async def readiness(
 
 
 @router.get("/details", response_model=HealthDetails)
-async def details(db: AsyncSession = Depends(get_db)) -> HealthDetails:
+async def details(db: DbDep) -> HealthDetails:
     """Detailed health information."""
     service = HealthService(db)
     details_dict = await service.get_details()

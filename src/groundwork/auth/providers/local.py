@@ -23,6 +23,8 @@ class LocalAuthProvider(AuthProvider):
         user = result.scalar_one_or_none()
 
         if user is None:
+            # Perform dummy verification to prevent timing attacks
+            verify_password(password, hash_password("dummy"))
             return None
 
         if not user.is_active:

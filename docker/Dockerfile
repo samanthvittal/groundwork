@@ -10,7 +10,7 @@ WORKDIR /app
 RUN pip install uv
 
 # Dependencies layer (cached unless pyproject.toml changes)
-COPY pyproject.toml uv.lock ./
+COPY pyproject.toml uv.lock README.md ./
 RUN uv sync --frozen --no-dev
 
 # Production image

@@ -56,3 +56,20 @@ def test_decode_token_returns_none_for_invalid_token() -> None:
 
     result = decode_token("invalid.token.here")
     assert result is None
+
+
+def test_decode_token_returns_none_for_expired_token() -> None:
+    """decode_token should return None for expired tokens."""
+    from datetime import timedelta
+    from uuid import uuid4
+
+    from groundwork.auth.utils import create_access_token, decode_token
+
+    user_id = uuid4()
+    token = create_access_token(
+        user_id=str(user_id),
+        expires_delta=timedelta(seconds=-1),  # Already expired
+    )
+
+    result = decode_token(token)
+    assert result is None

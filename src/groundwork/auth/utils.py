@@ -13,8 +13,6 @@ pwd_context: CryptContext = CryptContext(schemes=["argon2"], deprecated="auto")
 
 # JWT settings
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 15
-REFRESH_TOKEN_EXPIRE_DAYS = 7
 
 
 def hash_password(password: str) -> str:
@@ -33,11 +31,12 @@ def create_access_token(user_id: str, expires_delta: timedelta | None = None) ->
     """Create a JWT access token."""
     settings = get_settings()
     expire = datetime.now(UTC) + (
-        expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expires_delta or timedelta(minutes=settings.access_token_expire_minutes)
     )
     payload = {
         "sub": user_id,
         "exp": expire,
+        "iat": datetime.now(UTC),
         "type": "access",
     }
     return cast(str, jwt.encode(payload, settings.secret_key, algorithm=ALGORITHM))
@@ -47,18 +46,19 @@ def create_refresh_token(user_id: str, expires_delta: timedelta | None = None) -
     """Create a JWT refresh token."""
     settings = get_settings()
     expire = datetime.now(UTC) + (
-        expires_delta or timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+        expires_delta or timedelta(days=settings.refresh_token_expire_days)
     )
     payload = {
         "sub": user_id,
         "exp": expire,
+        "iat": datetime.now(UTC),
         "type": "refresh",
     }
     return cast(str, jwt.encode(payload, settings.secret_key, algorithm=ALGORITHM))
 
 
 def decode_token(token: str) -> dict[str, Any] | None:
-    """Decode and validate a JWT token."""
+    """Decode and validate a JWT token. Returns None if token is invalid or expired."""
     settings = get_settings()
     try:
         payload = jwt.decode(token, settings.secret_key, algorithms=[ALGORITHM])

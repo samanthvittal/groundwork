@@ -3,6 +3,7 @@
 import secrets
 from datetime import UTC, datetime, timedelta
 from typing import Any
+from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,6 +15,7 @@ from groundwork.auth.utils import (
     create_refresh_token,
     decode_token,
     hash_password,
+    verify_password,
 )
 from groundwork.core.config import get_settings
 
@@ -66,19 +68,30 @@ class AuthService:
         if payload is None or payload.get("type") != "refresh":
             return False
 
-        # Find and revoke the token
-        from uuid import UUID
+        user_id = payload.get("sub")
+        if not user_id:
+            return False
 
+        # Find the specific token by verifying its hash
         result = await self.db.execute(
             select(RefreshToken)
-            .where(RefreshToken.user_id == UUID(payload["sub"]))
+            .where(RefreshToken.user_id == UUID(user_id))
             .where(RefreshToken.revoked_at.is_(None))
         )
         tokens = result.scalars().all()
 
+        # Find the specific token matching the hash
+        valid_token = None
         for token in tokens:
-            token.revoked_at = datetime.now(UTC)
+            if verify_password(refresh_token, token.token_hash):
+                valid_token = token
+                break
 
+        if valid_token is None:
+            return False
+
+        # Revoke only the specific token
+        valid_token.revoked_at = datetime.now(UTC)
         await self.db.flush()
         return True
 
@@ -92,11 +105,29 @@ class AuthService:
         if not user_id:
             return None
 
-        # Verify user exists and is active
-        from uuid import UUID
+        # Validate refresh token exists in database, is not revoked, and not expired
+        result = await self.db.execute(
+            select(RefreshToken)
+            .where(RefreshToken.user_id == UUID(user_id))
+            .where(RefreshToken.revoked_at.is_(None))
+            .where(RefreshToken.expires_at > datetime.now(UTC))
+        )
+        tokens = result.scalars().all()
 
-        result = await self.db.execute(select(User).where(User.id == UUID(user_id)))
-        user = result.scalar_one_or_none()
+        valid_token = None
+        for token in tokens:
+            if verify_password(refresh_token, token.token_hash):
+                valid_token = token
+                break
+
+        if valid_token is None:
+            return None  # Token not found, expired, or revoked
+
+        # Verify user exists and is active
+        user_result = await self.db.execute(
+            select(User).where(User.id == UUID(user_id))
+        )
+        user = user_result.scalar_one_or_none()
 
         if user is None or not user.is_active:
             return None

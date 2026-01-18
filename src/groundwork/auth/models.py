@@ -4,7 +4,7 @@ from datetime import datetime
 from uuid import UUID as PythonUUID
 from uuid import uuid4
 
-from sqlalchemy import Column, ForeignKey, String, Table, func
+from sqlalchemy import Column, DateTime, ForeignKey, String, Table, func
 from sqlalchemy.dialects.postgresql import UUID as PostgresUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -99,3 +99,24 @@ class User(Base):
     def full_name(self) -> str:
         """Return user's full name."""
         return f"{self.first_name} {self.last_name}"
+
+
+class RefreshToken(Base):
+    """Refresh token for session management."""
+
+    __tablename__ = "refresh_tokens"
+
+    id: Mapped[PythonUUID] = mapped_column(
+        PostgresUUID(as_uuid=True), primary_key=True, default=uuid4
+    )
+    user_id: Mapped[PythonUUID] = mapped_column(
+        PostgresUUID(as_uuid=True), ForeignKey("users.id")
+    )
+    token_hash: Mapped[str] = mapped_column(String(255), index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(default=func.now())
+
+    user: Mapped["User"] = relationship()

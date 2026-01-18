@@ -41,8 +41,16 @@ async def get_current_user(
             detail="Invalid token payload",
         )
 
+    try:
+        user_uuid = UUID(user_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload",
+        ) from None
+
     result = await db.execute(
-        select(User).options(selectinload(User.role)).where(User.id == UUID(user_id))
+        select(User).options(selectinload(User.role)).where(User.id == user_uuid)
     )
     user = result.scalar_one_or_none()
 

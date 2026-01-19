@@ -20,24 +20,25 @@ router = APIRouter()
 
 
 # Permission check functions that wrap require_permission with CurrentUser dependency
+# Note: All role operations use "roles:manage" permission (not granular permissions)
 def check_roles_read(current_user: CurrentUser) -> User:
-    """Check roles:read permission."""
-    return require_permission("roles:read")(current_user)
+    """Check roles:manage permission for reading roles."""
+    return require_permission("roles:manage")(current_user)
 
 
 def check_roles_create(current_user: CurrentUser) -> User:
-    """Check roles:create permission."""
-    return require_permission("roles:create")(current_user)
+    """Check roles:manage permission for creating roles."""
+    return require_permission("roles:manage")(current_user)
 
 
 def check_roles_update(current_user: CurrentUser) -> User:
-    """Check roles:update permission."""
-    return require_permission("roles:update")(current_user)
+    """Check roles:manage permission for updating roles."""
+    return require_permission("roles:manage")(current_user)
 
 
 def check_roles_delete(current_user: CurrentUser) -> User:
-    """Check roles:delete permission."""
-    return require_permission("roles:delete")(current_user)
+    """Check roles:manage permission for deleting roles."""
+    return require_permission("roles:manage")(current_user)
 
 
 @router.get("/roles", response_class=HTMLResponse)
@@ -60,9 +61,9 @@ async def roles_list(
     roles = list(result.scalars().all())
 
     # Check user permissions
-    can_create = current_user.role.has_permission("roles:create")
-    can_update = current_user.role.has_permission("roles:update")
-    can_delete = current_user.role.has_permission("roles:delete")
+    can_create = current_user.role.has_permission("roles:manage")
+    can_update = current_user.role.has_permission("roles:manage")
+    can_delete = current_user.role.has_permission("roles:manage")
 
     return templates.TemplateResponse(
         request=request,
@@ -220,8 +221,8 @@ async def roles_detail(
         return RedirectResponse(url="/roles?error=Role+not+found", status_code=303)
 
     # Check permissions
-    can_update = current_user.role.has_permission("roles:update")
-    can_delete = current_user.role.has_permission("roles:delete")
+    can_update = current_user.role.has_permission("roles:manage")
+    can_delete = current_user.role.has_permission("roles:manage")
 
     return templates.TemplateResponse(
         request=request,

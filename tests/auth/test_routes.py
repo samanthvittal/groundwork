@@ -288,3 +288,133 @@ async def test_me_requires_authentication(app: FastAPI, mock_db: AsyncMock) -> N
         response = await client.get("/api/v1/auth/me")
 
     assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_request_password_reset_always_returns_success(
+    app: FastAPI, mock_db: AsyncMock
+) -> None:
+    """POST /password-reset should always return success (prevent enumeration)."""
+    app.dependency_overrides[get_db] = lambda: mock_db
+
+    with patch("groundwork.auth.routes.AuthService") as mock_service_class:
+        mock_service = AsyncMock()
+        mock_service.request_password_reset.return_value = None  # User not found
+        mock_service_class.return_value = mock_service
+
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            response = await client.post(
+                "/api/v1/auth/password-reset",
+                json={"email": "nonexistent@example.com"},
+            )
+
+    assert response.status_code == 200
+    assert "message" in response.json()
+
+
+@pytest.mark.asyncio
+async def test_request_password_reset_success_when_user_exists(
+    app: FastAPI, mock_db: AsyncMock
+) -> None:
+    """POST /password-reset should return success when user exists."""
+    app.dependency_overrides[get_db] = lambda: mock_db
+
+    with patch("groundwork.auth.routes.AuthService") as mock_service_class:
+        mock_service = AsyncMock()
+        mock_service.request_password_reset.return_value = "reset-token-here"
+        mock_service_class.return_value = mock_service
+
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            response = await client.post(
+                "/api/v1/auth/password-reset",
+                json={"email": "test@example.com"},
+            )
+
+    assert response.status_code == 200
+    mock_service.request_password_reset.assert_called_once_with("test@example.com")
+
+
+@pytest.mark.asyncio
+async def test_request_password_reset_validates_email_format(
+    app: FastAPI, mock_db: AsyncMock
+) -> None:
+    """POST /password-reset should validate email format."""
+    app.dependency_overrides[get_db] = lambda: mock_db
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.post(
+            "/api/v1/auth/password-reset",
+            json={"email": "invalid-email"},
+        )
+
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_confirm_password_reset_success(app: FastAPI, mock_db: AsyncMock) -> None:
+    """PUT /password-reset/{token} should reset password."""
+    app.dependency_overrides[get_db] = lambda: mock_db
+
+    with patch("groundwork.auth.routes.AuthService") as mock_service_class:
+        mock_service = AsyncMock()
+        mock_service.confirm_password_reset.return_value = True
+        mock_service_class.return_value = mock_service
+
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            response = await client.put(
+                "/api/v1/auth/password-reset/valid-token",
+                json={"token": "valid-token", "new_password": "newpassword123"},
+            )
+
+    assert response.status_code == 200
+    assert response.json()["message"] == "Password reset successfully"
+
+
+@pytest.mark.asyncio
+async def test_confirm_password_reset_invalid_token(
+    app: FastAPI, mock_db: AsyncMock
+) -> None:
+    """PUT /password-reset/{token} should return 400 for invalid token."""
+    app.dependency_overrides[get_db] = lambda: mock_db
+
+    with patch("groundwork.auth.routes.AuthService") as mock_service_class:
+        mock_service = AsyncMock()
+        mock_service.confirm_password_reset.return_value = False
+        mock_service_class.return_value = mock_service
+
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            response = await client.put(
+                "/api/v1/auth/password-reset/invalid-token",
+                json={"token": "invalid-token", "new_password": "newpassword123"},
+            )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Invalid or expired reset token"
+
+
+@pytest.mark.asyncio
+async def test_confirm_password_reset_validates_password_length(
+    app: FastAPI, mock_db: AsyncMock
+) -> None:
+    """PUT /password-reset/{token} should validate password minimum length."""
+    app.dependency_overrides[get_db] = lambda: mock_db
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.put(
+            "/api/v1/auth/password-reset/some-token",
+            json={"token": "some-token", "new_password": "short"},
+        )
+
+    assert response.status_code == 422

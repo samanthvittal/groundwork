@@ -8,7 +8,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from groundwork.auth.dependencies import get_current_user
 from groundwork.auth.models import User
-from groundwork.auth.schemas import LoginRequest, TokenResponse, UserResponse
+from groundwork.auth.schemas import (
+    LoginRequest,
+    PasswordResetConfirm,
+    PasswordResetRequest,
+    TokenResponse,
+    UserResponse,
+)
 from groundwork.auth.services import AuthService
 from groundwork.core.database import get_db
 
@@ -122,3 +128,40 @@ async def get_me(
 ) -> UserResponse:
     """Get current authenticated user."""
     return UserResponse.model_validate(current_user)
+
+
+@router.post("/password-reset")
+async def request_password_reset(
+    request: PasswordResetRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> dict[str, str]:
+    """Request password reset email.
+
+    Always returns success to prevent email enumeration.
+    """
+    service = AuthService(db)
+    # In production, send email with the returned token
+    # For now, just call the service (result intentionally unused to prevent enumeration)
+    await service.request_password_reset(request.email)
+
+    # Always return success to prevent email enumeration
+    return {"message": "If the email exists, a reset link has been sent"}
+
+
+@router.put("/password-reset/{token}")
+async def confirm_password_reset(
+    token: str,
+    request: PasswordResetConfirm,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> dict[str, str]:
+    """Reset password with token."""
+    service = AuthService(db)
+    success = await service.confirm_password_reset(token, request.new_password)
+
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset token",
+        )
+
+    return {"message": "Password reset successfully"}

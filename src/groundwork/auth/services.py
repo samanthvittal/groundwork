@@ -8,7 +8,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from groundwork.auth.models import RefreshToken, User
+from groundwork.auth.models import PasswordResetToken, RefreshToken, User
 from groundwork.auth.providers.local import LocalAuthProvider
 from groundwork.auth.utils import (
     create_access_token,
@@ -141,3 +141,78 @@ class AuthService:
             "csrf_token": csrf_token,
             "user": user,
         }
+
+    async def request_password_reset(self, email: str) -> str | None:
+        """Generate password reset token for email.
+
+        Returns the raw token (to be sent via email) or None if user not found.
+        """
+        result = await self.db.execute(select(User).where(User.email == email))
+        user = result.scalar_one_or_none()
+
+        if user is None or not user.is_active:
+            return None
+
+        # Generate token
+        raw_token = secrets.token_urlsafe(32)
+
+        # Store hashed token
+        token_record = PasswordResetToken(
+            user_id=user.id,
+            token_hash=hash_password(raw_token),
+            expires_at=datetime.now(UTC) + timedelta(hours=1),
+        )
+        self.db.add(token_record)
+        await self.db.flush()
+
+        return raw_token
+
+    async def confirm_password_reset(self, token: str, new_password: str) -> bool:
+        """Reset password using token.
+
+        Returns True if successful, False if token invalid/expired.
+        """
+        # Find valid tokens (not used, not expired)
+        reset_token_result = await self.db.execute(
+            select(PasswordResetToken)
+            .where(PasswordResetToken.used_at.is_(None))
+            .where(PasswordResetToken.expires_at > datetime.now(UTC))
+        )
+        tokens = reset_token_result.scalars().all()
+
+        # Verify token hash
+        valid_token: PasswordResetToken | None = None
+        for t in tokens:
+            if verify_password(token, t.token_hash):
+                valid_token = t
+                break
+
+        if valid_token is None:
+            return False
+
+        # Get user and update password
+        user_result = await self.db.execute(
+            select(User).where(User.id == valid_token.user_id)
+        )
+        user = user_result.scalar_one_or_none()
+
+        if user is None:
+            return False
+
+        # Update password
+        user.hashed_password = hash_password(new_password)
+
+        # Mark token as used
+        valid_token.used_at = datetime.now(UTC)
+
+        # Revoke all refresh tokens for user
+        refresh_token_result = await self.db.execute(
+            select(RefreshToken)
+            .where(RefreshToken.user_id == user.id)
+            .where(RefreshToken.revoked_at.is_(None))
+        )
+        for rt in refresh_token_result.scalars():
+            rt.revoked_at = datetime.now(UTC)
+
+        await self.db.flush()
+        return True

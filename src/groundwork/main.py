@@ -17,6 +17,7 @@ from groundwork.core.logging import get_logger, setup_logging
 from groundwork.core.seed import seed_defaults
 from groundwork.health.routes import router as health_router
 from groundwork.profile.routes import router as profile_router
+from groundwork.projects.routes import router as projects_router
 from groundwork.roles.routes import router as roles_router
 from groundwork.setup.middleware import SetupCheckMiddleware
 from groundwork.setup.routes import router as setup_router
@@ -26,6 +27,9 @@ from groundwork.views import (
 )
 from groundwork.views import (
     profile_router as profile_view_router,
+)
+from groundwork.views import (
+    projects_router as projects_view_router,
 )
 from groundwork.views import (
     roles_router as roles_view_router,
@@ -124,6 +128,7 @@ def create_app() -> FastAPI:
     app.include_router(health_router, prefix="/health", tags=["health"])
     app.include_router(setup_router, prefix="/api/v1/setup", tags=["setup"])
     app.include_router(profile_router, prefix="/api/v1/profile", tags=["profile"])
+    app.include_router(projects_router, prefix="/api/v1/projects", tags=["projects"])
     app.include_router(roles_router, prefix="/api/v1/roles", tags=["roles"])
     app.include_router(users_router, prefix="/api/v1/users", tags=["users"])
 
@@ -131,6 +136,7 @@ def create_app() -> FastAPI:
     app.include_router(setup_view_router, tags=["setup-views"])
     app.include_router(auth_view_router, tags=["auth-views"])
     app.include_router(profile_view_router, tags=["profile-views"])
+    app.include_router(projects_view_router, tags=["projects-views"])
     app.include_router(users_view_router, tags=["users-views"])
     app.include_router(roles_view_router, tags=["roles-views"])
     app.include_router(placeholder_view_router, tags=["placeholder-views"])

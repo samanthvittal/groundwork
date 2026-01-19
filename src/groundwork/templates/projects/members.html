@@ -1,0 +1,291 @@
+{% extends "layouts/app.html" %}
+
+{% block title %}Members - {{ project.name }}{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+    <div class="page-header__content">
+        <nav class="breadcrumb">
+            <a href="/projects" class="breadcrumb__link">Projects</a>
+            <span class="breadcrumb__separator">/</span>
+            <a href="/projects/{{ project.id }}" class="breadcrumb__link">{{ project.key }}</a>
+            <span class="breadcrumb__separator">/</span>
+            <span class="breadcrumb__current">Members</span>
+        </nav>
+        <h1 class="page-header__title">Manage Members</h1>
+        <p class="page-header__description">Add, remove, or update team member roles</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="members-page">
+    {% if success %}
+    <div class="alert alert--success" style="margin-bottom: var(--spacing-4);">
+        <div class="alert__content">
+            <p class="alert__message">{{ success }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if error %}
+    <div class="alert alert--error" style="margin-bottom: var(--spacing-4);">
+        <div class="alert__content">
+            <p class="alert__message">{{ error }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="members-page__grid">
+        <div class="members-page__main">
+            <div class="card">
+                <div class="card__header">
+                    <h2 class="card__title">Team Members ({{ members|length }})</h2>
+                </div>
+                <div class="card__body card__body--no-padding">
+                    {% if members %}
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Member</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Joined</th>
+                                    <th class="table__actions-col">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for member in members %}
+                                <tr>
+                                    <td>
+                                        <div class="user-cell">
+                                            <div class="avatar avatar--sm">
+                                                {% if member.user.avatar_path %}
+                                                    <img src="{{ member.user.avatar_path }}" alt="{{ member.user.full_name }}">
+                                                {% else %}
+                                                    {{ member.user.first_name[0] }}{{ member.user.last_name[0] }}
+                                                {% endif %}
+                                            </div>
+                                            <div class="user-cell__info">
+                                                <span class="user-cell__name">{{ member.user.full_name }}</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ member.user.email }}</td>
+                                    <td>
+                                        <form method="post" action="/projects/{{ project.id }}/members/{{ member.user_id }}/update" class="role-form">
+                                            <select name="role" class="form-select form-select--sm" onchange="this.form.submit()">
+                                                {% for r in roles %}
+                                                <option value="{{ r.value }}" {% if member.role == r %}selected{% endif %}>
+                                                    {{ r.value|capitalize }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </form>
+                                    </td>
+                                    <td>{{ member.joined_at.strftime('%Y-%m-%d') }}</td>
+                                    <td class="table__actions-col">
+                                        <form method="post" action="/projects/{{ project.id }}/members/{{ member.user_id }}/remove" onsubmit="return confirm('Remove {{ member.user.full_name }} from this project?');">
+                                            <button type="submit" class="btn btn--ghost btn--sm btn--error" title="Remove">
+                                                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+                                                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                                </svg>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <p>No members yet</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="members-page__sidebar">
+            <div class="card">
+                <div class="card__header">
+                    <h2 class="card__title">Add Member</h2>
+                </div>
+                <div class="card__body">
+                    {% if available_users %}
+                    <form method="post" action="/projects/{{ project.id }}/members/add" class="form">
+                        <div class="form-group">
+                            <label for="user_id" class="form-label">Select User</label>
+                            <select id="user_id" name="user_id" class="form-select" required>
+                                <option value="">Choose a user...</option>
+                                {% for user in available_users %}
+                                <option value="{{ user.id }}">{{ user.full_name }} ({{ user.email }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="role" class="form-label">Role</label>
+                            <select id="role" name="role" class="form-select">
+                                {% for r in roles %}
+                                {% if r.value != 'owner' %}
+                                <option value="{{ r.value }}" {% if r.value == 'member' %}selected{% endif %}>
+                                    {{ r.value|capitalize }}
+                                </option>
+                                {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn--primary btn--full">Add Member</button>
+                    </form>
+                    {% else %}
+                    <p class="text-secondary">All users are already members of this project.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: var(--spacing-4);">
+                <div class="card__header">
+                    <h2 class="card__title">Role Permissions</h2>
+                </div>
+                <div class="card__body">
+                    <dl class="role-descriptions">
+                        <div class="role-descriptions__item">
+                            <dt>Owner</dt>
+                            <dd>Full control, can delete project</dd>
+                        </div>
+                        <div class="role-descriptions__item">
+                            <dt>Admin</dt>
+                            <dd>Can manage members and settings</dd>
+                        </div>
+                        <div class="role-descriptions__item">
+                            <dt>Member</dt>
+                            <dd>Can create and edit content</dd>
+                        </div>
+                        <div class="role-descriptions__item">
+                            <dt>Viewer</dt>
+                            <dd>Read-only access</dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.members-page__grid {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: var(--spacing-4);
+}
+
+@media (max-width: 900px) {
+    .members-page__grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.user-cell {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+}
+
+.user-cell__name {
+    font-weight: var(--font-weight-medium);
+}
+
+.role-form {
+    display: inline-block;
+}
+
+.form-group {
+    margin-bottom: var(--spacing-4);
+}
+
+.form-label {
+    display: block;
+    font-weight: var(--font-weight-medium);
+    margin-bottom: var(--spacing-2);
+    color: var(--color-text);
+}
+
+.form-select {
+    width: 100%;
+}
+
+.btn--full {
+    width: 100%;
+}
+
+.btn--error {
+    color: var(--color-error);
+}
+
+.btn--error:hover {
+    background: var(--color-error-light);
+}
+
+.role-descriptions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-3);
+}
+
+.role-descriptions__item {
+    padding-bottom: var(--spacing-3);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.role-descriptions__item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.role-descriptions__item dt {
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text);
+    margin-bottom: var(--spacing-1);
+}
+
+.role-descriptions__item dd {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+.empty-state {
+    padding: var(--spacing-6);
+    text-align: center;
+    color: var(--color-text-secondary);
+}
+
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-2);
+}
+
+.breadcrumb__link {
+    color: var(--color-text-secondary);
+    text-decoration: none;
+}
+
+.breadcrumb__link:hover {
+    color: var(--color-primary);
+}
+
+.breadcrumb__separator {
+    color: var(--color-text-muted);
+}
+
+.breadcrumb__current {
+    color: var(--color-text);
+}
+</style>
+{% endblock %}

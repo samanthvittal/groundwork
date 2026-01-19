@@ -1,6 +1,7 @@
 """Authentication models."""
 
 from datetime import datetime
+from typing import TYPE_CHECKING
 from uuid import UUID as PythonUUID
 from uuid import uuid4
 
@@ -9,6 +10,9 @@ from sqlalchemy.dialects.postgresql import UUID as PostgresUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from groundwork.core.database import Base
+
+if TYPE_CHECKING:
+    from groundwork.projects.models import Project, ProjectMember
 
 # Association table for Role <-> Permission many-to-many
 role_permissions = Table(
@@ -97,6 +101,10 @@ class User(Base):
 
     role: Mapped["Role"] = relationship(back_populates="users")
     refresh_tokens: Mapped[list["RefreshToken"]] = relationship(back_populates="user")
+    owned_projects: Mapped[list["Project"]] = relationship(back_populates="owner")
+    project_memberships: Mapped[list["ProjectMember"]] = relationship(
+        back_populates="user"
+    )
 
     @property
     def full_name(self) -> str:

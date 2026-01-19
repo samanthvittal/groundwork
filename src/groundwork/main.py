@@ -6,10 +6,10 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
 
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 
 from groundwork.core.config import get_settings
 from groundwork.core.database import get_engine, get_session_factory
@@ -21,21 +21,28 @@ from groundwork.roles.routes import router as roles_router
 from groundwork.setup.middleware import SetupCheckMiddleware
 from groundwork.setup.routes import router as setup_router
 from groundwork.users.routes import router as users_router
+from groundwork.views import (
+    auth_router as auth_view_router,
+)
+from groundwork.views import (
+    profile_router as profile_view_router,
+)
+from groundwork.views import (
+    roles_router as roles_view_router,
+)
+from groundwork.views import (
+    setup_router as setup_view_router,
+)
+from groundwork.views import (
+    users_router as users_view_router,
+)
+from groundwork.views.placeholder import router as placeholder_view_router
 
 logger = get_logger(__name__)
 
-# Path configuration for templates and static files
+# Path configuration for static files
 BASE_DIR = Path(__file__).resolve().parent
-TEMPLATES_DIR = BASE_DIR / "templates"
 STATIC_DIR = BASE_DIR / "static"
-
-# Initialize Jinja2Templates
-templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
-
-
-def get_templates() -> Jinja2Templates:
-    """Get the configured Jinja2Templates instance."""
-    return templates
 
 
 @asynccontextmanager
@@ -119,6 +126,36 @@ def create_app() -> FastAPI:
     app.include_router(profile_router, prefix="/api/v1/profile", tags=["profile"])
     app.include_router(roles_router, prefix="/api/v1/roles", tags=["roles"])
     app.include_router(users_router, prefix="/api/v1/users", tags=["users"])
+
+    # View routes (HTML pages)
+    app.include_router(setup_view_router, tags=["setup-views"])
+    app.include_router(auth_view_router, tags=["auth-views"])
+    app.include_router(profile_view_router, tags=["profile-views"])
+    app.include_router(users_view_router, tags=["users-views"])
+    app.include_router(roles_view_router, tags=["roles-views"])
+    app.include_router(placeholder_view_router, tags=["placeholder-views"])
+
+    # Root redirect - goes to users page (requires auth, so will redirect to login if needed)
+    @app.get("/")
+    async def root() -> RedirectResponse:
+        """Redirect root to users page."""
+        return RedirectResponse(url="/users", status_code=303)
+
+    # Exception handler for 401 errors - redirect to login for non-API routes
+    @app.exception_handler(HTTPException)
+    async def http_exception_handler(request: Request, exc: HTTPException) -> Response:
+        """Handle HTTP exceptions - redirect 401 to login for view routes."""
+        from fastapi.responses import JSONResponse
+
+        # For 401 errors on non-API routes, redirect to login
+        if exc.status_code == 401 and not request.url.path.startswith("/api/"):
+            return RedirectResponse(url="/login", status_code=303)
+
+        # For API routes or other errors, return JSON response
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.detail},
+        )
 
     return app
 

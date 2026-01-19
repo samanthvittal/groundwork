@@ -1,0 +1,32 @@
+{% extends "layouts/public.html" %}
+
+{% block title %}Welcome - Setup{% endblock %}
+
+{% block card_header %}
+<div class="setup-progress">
+  <span class="step active">1</span>
+  <span class="step">2</span>
+  <span class="step">3</span>
+  <span class="step">4</span>
+</div>
+
+<div class="setup-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+    <path d="M2 17l10 5 10-5"/>
+    <path d="M2 12l10 5 10-5"/>
+  </svg>
+</div>
+
+<h1 class="public-layout__title">Welcome to Groundwork</h1>
+<p class="public-layout__subtitle">
+  Let's get your workspace set up. This will only take a few minutes.
+  We'll configure your instance, create an admin account, and optionally set up email.
+</p>
+{% endblock %}
+
+{% block content %}
+<a href="/setup/instance" class="btn btn-primary btn-lg w-full">
+  Get Started
+</a>
+{% endblock %}

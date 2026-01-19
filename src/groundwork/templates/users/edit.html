@@ -1,0 +1,269 @@
+{% extends "layouts/app.html" %}
+
+{% block title %}Edit {{ target_user.full_name }}{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+    <div class="page-header__content">
+        <nav class="breadcrumbs">
+            <a href="/users" class="breadcrumbs__link">Users</a>
+            <span class="breadcrumbs__separator">/</span>
+            <a href="/users/{{ target_user.id }}" class="breadcrumbs__link">{{ target_user.full_name }}</a>
+            <span class="breadcrumbs__separator">/</span>
+            <span class="breadcrumbs__current">Edit</span>
+        </nav>
+        <h1 class="page-header__title">Edit User</h1>
+        <p class="page-header__description">Update user account information</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="user-edit">
+    <div class="card" style="max-width: 600px;">
+        <div class="card__header">
+            <h2 class="card__title">User Information</h2>
+        </div>
+        <div class="card__body">
+            {% if error %}
+            <div class="alert alert--error" style="margin-bottom: var(--spacing-4);">
+                <div class="alert__content">
+                    <p class="alert__message">{{ error }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if success %}
+            <div class="alert alert--success" style="margin-bottom: var(--spacing-4);">
+                <div class="alert__content">
+                    <p class="alert__message">{{ success }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <form method="post" action="/users/{{ target_user.id }}/edit" class="form">
+                <!-- Email (read-only) -->
+                <div class="form-group">
+                    <label class="form-label" for="email">Email</label>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        class="form-input"
+                        value="{{ target_user.email }}"
+                        disabled
+                    >
+                    <span class="form-hint">Email cannot be changed</span>
+                </div>
+
+                <!-- First Name -->
+                <div class="form-group{% if errors and errors.first_name %} form-group--error{% endif %}">
+                    <label class="form-label form-label--required" for="first_name">First Name</label>
+                    <input
+                        type="text"
+                        id="first_name"
+                        name="first_name"
+                        class="form-input"
+                        value="{{ first_name if first_name is defined else target_user.first_name }}"
+                        required
+                        autofocus
+                    >
+                    {% if errors and errors.first_name %}
+                    <span class="form-error">{{ errors.first_name }}</span>
+                    {% endif %}
+                </div>
+
+                <!-- Last Name -->
+                <div class="form-group{% if errors and errors.last_name %} form-group--error{% endif %}">
+                    <label class="form-label form-label--required" for="last_name">Last Name</label>
+                    <input
+                        type="text"
+                        id="last_name"
+                        name="last_name"
+                        class="form-input"
+                        value="{{ last_name if last_name is defined else target_user.last_name }}"
+                        required
+                    >
+                    {% if errors and errors.last_name %}
+                    <span class="form-error">{{ errors.last_name }}</span>
+                    {% endif %}
+                </div>
+
+                <!-- Display Name (optional) -->
+                <div class="form-group">
+                    <label class="form-label" for="display_name">Display Name</label>
+                    <input
+                        type="text"
+                        id="display_name"
+                        name="display_name"
+                        class="form-input"
+                        value="{{ display_name if display_name is defined else (target_user.display_name or '') }}"
+                        placeholder="Optional"
+                    >
+                    <span class="form-hint">Shown instead of full name if set</span>
+                </div>
+
+                <!-- Role -->
+                <div class="form-group{% if errors and errors.role_id %} form-group--error{% endif %}">
+                    <label class="form-label form-label--required" for="role_id">Role</label>
+                    <select
+                        id="role_id"
+                        name="role_id"
+                        class="form-select"
+                        required
+                    >
+                        {% for role in roles %}
+                        <option value="{{ role.id }}" {% if (selected_role_id == role.id|string) or (selected_role_id is not defined and target_user.role_id == role.id) %}selected{% endif %}>
+                            {{ role.name }}{% if role.is_system %} (System){% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% if errors and errors.role_id %}
+                    <span class="form-error">{{ errors.role_id }}</span>
+                    {% else %}
+                    <span class="form-hint">Determines user permissions</span>
+                    {% endif %}
+                </div>
+
+                <!-- Active Status -->
+                <div class="form-group">
+                    <div class="form-checkbox">
+                        <input
+                            type="checkbox"
+                            id="is_active"
+                            name="is_active"
+                            value="true"
+                            {% if (is_active is defined and is_active) or (is_active is not defined and target_user.is_active) %}checked{% endif %}
+                            {% if target_user.id == current_user.id %}disabled{% endif %}
+                        >
+                        <label for="is_active">Active</label>
+                    </div>
+                    {% if target_user.id == current_user.id %}
+                    <span class="form-hint">You cannot deactivate your own account</span>
+                    {% else %}
+                    <span class="form-hint">Inactive users cannot log in</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-actions form-actions--between" style="margin-top: var(--spacing-6);">
+                    <a href="/users/{{ target_user.id }}" class="btn btn--secondary">Cancel</a>
+                    <button type="submit" class="btn btn--primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Reset Password Section -->
+    <div class="card" style="max-width: 600px; margin-top: var(--spacing-4);">
+        <div class="card__header">
+            <h2 class="card__title">Reset Password</h2>
+        </div>
+        <div class="card__body">
+            {% if password_success %}
+            <div class="alert alert--success" style="margin-bottom: var(--spacing-4);">
+                <div class="alert__content">
+                    <p class="alert__message">{{ password_success }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if password_error %}
+            <div class="alert alert--error" style="margin-bottom: var(--spacing-4);">
+                <div class="alert__content">
+                    <p class="alert__message">{{ password_error }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <p class="text-secondary text-sm" style="margin-bottom: var(--spacing-4);">
+                Set a new password for this user. They will need to use this password to log in.
+            </p>
+
+            <form method="post" action="/users/{{ target_user.id }}/edit" class="form">
+                <input type="hidden" name="action" value="reset_password">
+
+                <!-- New Password -->
+                <div class="form-group{% if password_errors and password_errors.new_password %} form-group--error{% endif %}">
+                    <label class="form-label form-label--required" for="new_password">New Password</label>
+                    <input
+                        type="password"
+                        id="new_password"
+                        name="new_password"
+                        class="form-input"
+                        required
+                        minlength="8"
+                    >
+                    {% if password_errors and password_errors.new_password %}
+                    <span class="form-error">{{ password_errors.new_password }}</span>
+                    {% else %}
+                    <span class="form-hint">Minimum 8 characters</span>
+                    {% endif %}
+                </div>
+
+                <!-- Confirm Password -->
+                <div class="form-group{% if password_errors and password_errors.confirm_password %} form-group--error{% endif %}">
+                    <label class="form-label form-label--required" for="confirm_new_password">Confirm Password</label>
+                    <input
+                        type="password"
+                        id="confirm_new_password"
+                        name="confirm_new_password"
+                        class="form-input"
+                        required
+                        minlength="8"
+                    >
+                    {% if password_errors and password_errors.confirm_password %}
+                    <span class="form-error">{{ password_errors.confirm_password }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-actions" style="margin-top: var(--spacing-4);">
+                    <button type="submit" class="btn btn--secondary">Reset Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-2);
+}
+
+.breadcrumbs__link {
+    color: var(--color-text-secondary);
+}
+
+.breadcrumbs__link:hover {
+    color: var(--color-primary);
+}
+
+.breadcrumbs__separator {
+    color: var(--color-text-muted);
+}
+
+.breadcrumbs__current {
+    color: var(--color-text);
+}
+
+.form-checkbox {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+}
+
+.form-checkbox input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--color-primary);
+}
+
+.form-checkbox label {
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+}
+</style>
+{% endblock %}

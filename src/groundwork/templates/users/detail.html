@@ -1,0 +1,286 @@
+{% extends "layouts/app.html" %}
+
+{% block title %}{{ target_user.full_name }} - User Details{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+    <div class="page-header__content">
+        <nav class="breadcrumbs">
+            <a href="/users" class="breadcrumbs__link">Users</a>
+            <span class="breadcrumbs__separator">/</span>
+            <span class="breadcrumbs__current">{{ target_user.full_name }}</span>
+        </nav>
+        <h1 class="page-header__title">{{ target_user.full_name }}</h1>
+        <p class="page-header__description">User account details and activity</p>
+    </div>
+    <div class="page-header__actions">
+        {% if can_update %}
+        <a href="/users/{{ target_user.id }}/edit" class="btn btn--secondary">Edit User</a>
+        {% endif %}
+        {% if can_delete and target_user.id != current_user.id %}
+        <form method="post" action="/users/{{ target_user.id }}/delete" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this user? This action cannot be undone.');">
+            <button type="submit" class="btn btn--danger">Delete User</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="user-detail">
+    {% if success %}
+    <div class="alert alert--success" style="margin-bottom: var(--spacing-4);">
+        <div class="alert__content">
+            <p class="alert__message">{{ success }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if error %}
+    <div class="alert alert--error" style="margin-bottom: var(--spacing-4);">
+        <div class="alert__content">
+            <p class="alert__message">{{ error }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="user-detail-grid">
+        <!-- Sidebar with avatar and quick info -->
+        <div class="user-detail-sidebar">
+            <div class="card">
+                <div class="card__body" style="text-align: center; padding: var(--spacing-8);">
+                    <div class="avatar avatar--xl" style="width: 6rem; height: 6rem; font-size: 2rem; margin: 0 auto var(--spacing-4);">
+                        {% if target_user.avatar_path %}
+                            <img src="{{ target_user.avatar_path }}" alt="{{ target_user.full_name }}">
+                        {% else %}
+                            {{ target_user.first_name[0] }}{{ target_user.last_name[0] }}
+                        {% endif %}
+                    </div>
+                    <h2 class="h4" style="margin-bottom: var(--spacing-1);">{{ target_user.full_name }}</h2>
+                    <p class="text-secondary text-sm" style="margin-bottom: var(--spacing-3);">{{ target_user.email }}</p>
+
+                    <div class="user-badges" style="display: flex; gap: var(--spacing-2); justify-content: center; flex-wrap: wrap;">
+                        {% if target_user.role %}
+                        <span class="badge badge--{% if target_user.role.name == 'Admin' %}purple{% elif target_user.role.is_system %}info{% else %}primary{% endif %}">
+                            {{ target_user.role.name }}
+                        </span>
+                        {% endif %}
+                        {% if target_user.is_active %}
+                        <span class="badge badge--success">Active</span>
+                        {% else %}
+                        <span class="badge badge--secondary">Inactive</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main content area -->
+        <div class="user-detail-main">
+            <!-- Account Information -->
+            <div class="card">
+                <div class="card__header">
+                    <h3 class="card__title">Account Information</h3>
+                </div>
+                <div class="card__body">
+                    <dl class="details-list">
+                        <div class="details-list__item">
+                            <dt class="details-list__label">Email</dt>
+                            <dd class="details-list__value">{{ target_user.email }}</dd>
+                        </div>
+                        <div class="details-list__item">
+                            <dt class="details-list__label">First Name</dt>
+                            <dd class="details-list__value">{{ target_user.first_name }}</dd>
+                        </div>
+                        <div class="details-list__item">
+                            <dt class="details-list__label">Last Name</dt>
+                            <dd class="details-list__value">{{ target_user.last_name }}</dd>
+                        </div>
+                        {% if target_user.display_name %}
+                        <div class="details-list__item">
+                            <dt class="details-list__label">Display Name</dt>
+                            <dd class="details-list__value">{{ target_user.display_name }}</dd>
+                        </div>
+                        {% endif %}
+                        <div class="details-list__item">
+                            <dt class="details-list__label">Role</dt>
+                            <dd class="details-list__value">
+                                <span class="badge badge--primary">{{ target_user.role.name if target_user.role else 'N/A' }}</span>
+                            </dd>
+                        </div>
+                        <div class="details-list__item">
+                            <dt class="details-list__label">Status</dt>
+                            <dd class="details-list__value">
+                                {% if target_user.is_active %}
+                                <span class="badge badge--success">Active</span>
+                                {% else %}
+                                <span class="badge badge--secondary">Inactive</span>
+                                {% endif %}
+                            </dd>
+                        </div>
+                        <div class="details-list__item">
+                            <dt class="details-list__label">Email Verified</dt>
+                            <dd class="details-list__value">
+                                {% if target_user.email_verified %}
+                                <span class="badge badge--success">Verified</span>
+                                {% else %}
+                                <span class="badge badge--warning">Unverified</span>
+                                {% endif %}
+                            </dd>
+                        </div>
+                        <div class="details-list__item">
+                            <dt class="details-list__label">Created</dt>
+                            <dd class="details-list__value">{{ target_user.created_at.strftime('%B %d, %Y at %H:%M') }}</dd>
+                        </div>
+                        {% if target_user.last_login_at %}
+                        <div class="details-list__item">
+                            <dt class="details-list__label">Last Login</dt>
+                            <dd class="details-list__value">{{ target_user.last_login_at.strftime('%B %d, %Y at %H:%M') }}</dd>
+                        </div>
+                        {% else %}
+                        <div class="details-list__item">
+                            <dt class="details-list__label">Last Login</dt>
+                            <dd class="details-list__value text-secondary">Never</dd>
+                        </div>
+                        {% endif %}
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Preferences -->
+            <div class="card" style="margin-top: var(--spacing-4);">
+                <div class="card__header">
+                    <h3 class="card__title">Preferences</h3>
+                </div>
+                <div class="card__body">
+                    <dl class="details-list">
+                        <div class="details-list__item">
+                            <dt class="details-list__label">Timezone</dt>
+                            <dd class="details-list__value">{{ target_user.timezone }}</dd>
+                        </div>
+                        <div class="details-list__item">
+                            <dt class="details-list__label">Language</dt>
+                            <dd class="details-list__value">{{ target_user.language }}</dd>
+                        </div>
+                        <div class="details-list__item">
+                            <dt class="details-list__label">Theme</dt>
+                            <dd class="details-list__value">{{ target_user.theme|capitalize }}</dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+
+            {% if activity_log %}
+            <!-- Activity Log -->
+            <div class="card" style="margin-top: var(--spacing-4);">
+                <div class="card__header">
+                    <h3 class="card__title">Recent Activity</h3>
+                </div>
+                <div class="card__body">
+                    <ul class="activity-list">
+                        {% for activity in activity_log %}
+                        <li class="activity-item">
+                            <span class="activity-item__time">{{ activity.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
+                            <span class="activity-item__description">{{ activity.description }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.user-detail-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: var(--spacing-6);
+    max-width: 1000px;
+}
+
+@media (max-width: 768px) {
+    .user-detail-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-2);
+}
+
+.breadcrumbs__link {
+    color: var(--color-text-secondary);
+}
+
+.breadcrumbs__link:hover {
+    color: var(--color-primary);
+}
+
+.breadcrumbs__separator {
+    color: var(--color-text-muted);
+}
+
+.breadcrumbs__current {
+    color: var(--color-text);
+}
+
+.details-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-4);
+}
+
+.details-list__item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-1);
+}
+
+.details-list__label {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.details-list__value {
+    font-size: var(--font-size-sm);
+    color: var(--color-text);
+}
+
+.activity-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.activity-item {
+    display: flex;
+    gap: var(--spacing-4);
+    padding: var(--spacing-3) 0;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-item__time {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+}
+
+.activity-item__description {
+    font-size: var(--font-size-sm);
+    color: var(--color-text);
+}
+</style>
+{% endblock %}

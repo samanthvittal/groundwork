@@ -1,0 +1,282 @@
+{% extends "layouts/app.html" %}
+
+{% block title %}Users{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+    <div class="page-header__content">
+        <h1 class="page-header__title">Users</h1>
+        <p class="page-header__description">Manage user accounts and access</p>
+    </div>
+    <div class="page-header__actions">
+        {% if can_create %}
+        <a href="/users/create" class="btn btn--primary">
+            <svg class="btn__icon" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+            </svg>
+            Create User
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="users-list">
+    {% if success %}
+    <div class="alert alert--success" style="margin-bottom: var(--spacing-4);">
+        <div class="alert__content">
+            <p class="alert__message">{{ success }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if error %}
+    <div class="alert alert--error" style="margin-bottom: var(--spacing-4);">
+        <div class="alert__content">
+            <p class="alert__message">{{ error }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="card">
+        <div class="card__header">
+            <div class="users-filters">
+                <form method="get" action="/users" class="filters-form">
+                    <div class="filter-group">
+                        <input
+                            type="text"
+                            name="search"
+                            class="form-input form-input--sm"
+                            placeholder="Search users..."
+                            value="{{ search or '' }}"
+                        >
+                    </div>
+                    <div class="filter-group">
+                        <select name="role" class="form-select form-select--sm">
+                            <option value="">All Roles</option>
+                            {% for role in roles %}
+                            <option value="{{ role.id }}" {% if selected_role == role.id|string %}selected{% endif %}>
+                                {{ role.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <select name="status" class="form-select form-select--sm">
+                            <option value="">All Status</option>
+                            <option value="active" {% if selected_status == 'active' %}selected{% endif %}>Active</option>
+                            <option value="inactive" {% if selected_status == 'inactive' %}selected{% endif %}>Inactive</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn--secondary btn--sm">Filter</button>
+                </form>
+            </div>
+        </div>
+        <div class="card__body card__body--no-padding">
+            {% if users %}
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Last Login</th>
+                            <th class="table__actions-col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>
+                                <div class="user-cell">
+                                    <div class="avatar avatar--sm">
+                                        {% if user.avatar_path %}
+                                            <img src="{{ user.avatar_path }}" alt="{{ user.full_name }}">
+                                        {% else %}
+                                            {{ user.first_name[0] }}{{ user.last_name[0] }}
+                                        {% endif %}
+                                    </div>
+                                    <div class="user-cell__info">
+                                        <span class="user-cell__name">{{ user.full_name }}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ user.email }}</td>
+                            <td>
+                                {% if user.role %}
+                                <span class="badge badge--{% if user.role.name == 'Admin' %}purple{% elif user.role.is_system %}info{% else %}primary{% endif %}">
+                                    {{ user.role.name }}
+                                </span>
+                                {% else %}
+                                <span class="badge badge--secondary">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user.is_active %}
+                                <span class="badge badge--success">Active</span>
+                                {% else %}
+                                <span class="badge badge--secondary">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user.last_login_at %}
+                                {{ user.last_login_at.strftime('%Y-%m-%d %H:%M') }}
+                                {% else %}
+                                <span class="text-secondary">Never</span>
+                                {% endif %}
+                            </td>
+                            <td class="table__actions-col">
+                                <div class="table-actions">
+                                    <a href="/users/{{ user.id }}" class="btn btn--ghost btn--sm" title="View">
+                                        <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+                                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                                            <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+                                        </svg>
+                                    </a>
+                                    {% if can_update %}
+                                    <a href="/users/{{ user.id }}/edit" class="btn btn--ghost btn--sm" title="Edit">
+                                        <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+                                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                        </svg>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if pagination %}
+            <div class="card__footer">
+                <div class="pagination">
+                    <span class="pagination__info">
+                        Showing {{ pagination.start }} to {{ pagination.end }} of {{ pagination.total }} users
+                    </span>
+                    <div class="pagination__controls">
+                        {% if pagination.has_prev %}
+                        <a href="/users?page={{ pagination.page - 1 }}{% if search %}&search={{ search }}{% endif %}{% if selected_role %}&role={{ selected_role }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}" class="btn btn--ghost btn--sm">Previous</a>
+                        {% endif %}
+                        {% if pagination.has_next %}
+                        <a href="/users?page={{ pagination.page + 1 }}{% if search %}&search={{ search }}{% endif %}{% if selected_role %}&role={{ selected_role }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}" class="btn btn--ghost btn--sm">Next</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-state__icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                    </svg>
+                </div>
+                <h3 class="empty-state__title">No users found</h3>
+                <p class="empty-state__description">
+                    {% if search or selected_role or selected_status %}
+                    Try adjusting your filters to find users.
+                    {% else %}
+                    Get started by creating the first user.
+                    {% endif %}
+                </p>
+                {% if can_create and not (search or selected_role or selected_status) %}
+                <a href="/users/create" class="btn btn--primary">Create User</a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.users-filters {
+    display: flex;
+    gap: var(--spacing-3);
+    flex-wrap: wrap;
+}
+
+.filters-form {
+    display: flex;
+    gap: var(--spacing-3);
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-1);
+}
+
+.user-cell {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+}
+
+.user-cell__info {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-cell__name {
+    font-weight: var(--font-weight-medium);
+}
+
+.table-actions {
+    display: flex;
+    gap: var(--spacing-1);
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-12) var(--spacing-6);
+    text-align: center;
+}
+
+.empty-state__icon {
+    color: var(--color-text-muted);
+    margin-bottom: var(--spacing-4);
+}
+
+.empty-state__title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text);
+    margin-bottom: var(--spacing-2);
+}
+
+.empty-state__description {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--spacing-4);
+    max-width: 400px;
+}
+
+.pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--spacing-4);
+}
+
+.pagination__info {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+.pagination__controls {
+    display: flex;
+    gap: var(--spacing-2);
+}
+</style>
+{% endblock %}

@@ -21,6 +21,21 @@ from groundwork.roles.routes import router as roles_router
 from groundwork.setup.middleware import SetupCheckMiddleware
 from groundwork.setup.routes import router as setup_router
 from groundwork.users.routes import router as users_router
+from groundwork.views import (
+    auth_router as auth_view_router,
+)
+from groundwork.views import (
+    profile_router as profile_view_router,
+)
+from groundwork.views import (
+    roles_router as roles_view_router,
+)
+from groundwork.views import (
+    setup_router as setup_view_router,
+)
+from groundwork.views import (
+    users_router as users_view_router,
+)
 
 logger = get_logger(__name__)
 
@@ -119,6 +134,13 @@ def create_app() -> FastAPI:
     app.include_router(profile_router, prefix="/api/v1/profile", tags=["profile"])
     app.include_router(roles_router, prefix="/api/v1/roles", tags=["roles"])
     app.include_router(users_router, prefix="/api/v1/users", tags=["users"])
+
+    # View routes (HTML pages)
+    app.include_router(setup_view_router, tags=["setup-views"])
+    app.include_router(auth_view_router, tags=["auth-views"])
+    app.include_router(profile_view_router, prefix="/profile", tags=["profile-views"])
+    app.include_router(users_view_router, prefix="/users", tags=["users-views"])
+    app.include_router(roles_view_router, prefix="/roles", tags=["roles-views"])
 
     return app
 

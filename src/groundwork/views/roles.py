@@ -1,0 +1,5 @@
+"""Role management view routes."""
+
+from fastapi import APIRouter
+
+router = APIRouter()

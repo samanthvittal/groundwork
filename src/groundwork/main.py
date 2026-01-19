@@ -13,6 +13,7 @@ from groundwork.core.logging import get_logger, setup_logging
 from groundwork.health.routes import router as health_router
 from groundwork.profile.routes import router as profile_router
 from groundwork.roles.routes import router as roles_router
+from groundwork.setup.middleware import SetupCheckMiddleware
 from groundwork.users.routes import router as users_router
 
 logger = get_logger(__name__)
@@ -52,6 +53,9 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Setup check middleware - redirect to setup wizard if setup not complete
+    app.add_middleware(SetupCheckMiddleware)
 
     # Request ID middleware
     @app.middleware("http")

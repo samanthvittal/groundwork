@@ -24,6 +24,7 @@ from groundwork.auth import models as auth_models  # noqa: F401
 from groundwork.core.config import get_settings
 from groundwork.core.database import Base, get_db
 from groundwork.main import create_app
+from groundwork.projects import models as projects_models  # noqa: F401
 from groundwork.setup import models as setup_models  # noqa: F401
 
 # Clear settings cache to use test settings

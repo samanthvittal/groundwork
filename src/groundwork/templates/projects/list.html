@@ -1,0 +1,252 @@
+{% extends "layouts/app.html" %}
+
+{% block title %}Projects{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+    <div class="page-header__content">
+        <h1 class="page-header__title">Projects</h1>
+        <p class="page-header__description">Manage your projects and teams</p>
+    </div>
+    <div class="page-header__actions">
+        <a href="/projects/create" class="btn btn--primary">
+            <svg class="btn__icon" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+            </svg>
+            Create Project
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="projects-list">
+    {% if success %}
+    <div class="alert alert--success" style="margin-bottom: var(--spacing-4);">
+        <div class="alert__content">
+            <p class="alert__message">{{ success }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if error %}
+    <div class="alert alert--error" style="margin-bottom: var(--spacing-4);">
+        <div class="alert__content">
+            <p class="alert__message">{{ error }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="card">
+        <div class="card__header">
+            <div class="projects-filters">
+                <form method="get" action="/projects" class="filters-form">
+                    <div class="filter-group">
+                        <input
+                            type="text"
+                            name="search"
+                            class="form-input form-input--sm"
+                            placeholder="Search projects..."
+                            value="{{ search or '' }}"
+                        >
+                    </div>
+                    {% if current_user.is_admin %}
+                    <div class="filter-group">
+                        <select name="status" class="form-select form-select--sm">
+                            <option value="">Active</option>
+                            <option value="active" {% if selected_status == 'active' %}selected{% endif %}>Active</option>
+                            <option value="archived" {% if selected_status == 'archived' %}selected{% endif %}>Archived</option>
+                        </select>
+                    </div>
+                    {% endif %}
+                    <button type="submit" class="btn btn--secondary btn--sm">Filter</button>
+                </form>
+            </div>
+        </div>
+        <div class="card__body card__body--no-padding">
+            {% if projects %}
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Key</th>
+                            <th>Name</th>
+                            <th>Visibility</th>
+                            <th>Members</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th class="table__actions-col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for project in projects %}
+                        <tr>
+                            <td>
+                                <span class="project-key">{{ project.key }}</span>
+                            </td>
+                            <td>
+                                <a href="/projects/{{ project.id }}" class="project-name">{{ project.name }}</a>
+                            </td>
+                            <td>
+                                <span class="badge badge--{% if project.visibility.value == 'private' %}secondary{% elif project.visibility.value == 'internal' %}info{% else %}success{% endif %}">
+                                    {{ project.visibility.value|capitalize }}
+                                </span>
+                            </td>
+                            <td>{{ project.member_count }}</td>
+                            <td>
+                                {% if project.status.value == 'active' %}
+                                <span class="badge badge--success">Active</span>
+                                {% elif project.status.value == 'archived' %}
+                                <span class="badge badge--secondary">Archived</span>
+                                {% else %}
+                                <span class="badge badge--error">Deleted</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ project.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td class="table__actions-col">
+                                <div class="table-actions">
+                                    <a href="/projects/{{ project.id }}" class="btn btn--ghost btn--sm" title="View">
+                                        <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+                                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                                            <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+                                        </svg>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if pagination %}
+            <div class="card__footer">
+                <div class="pagination">
+                    <span class="pagination__info">
+                        Showing {{ pagination.start }} to {{ pagination.end }} of {{ pagination.total }} projects
+                    </span>
+                    <div class="pagination__controls">
+                        {% if pagination.has_prev %}
+                        <a href="/projects?page={{ pagination.page - 1 }}{% if search %}&search={{ search }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}" class="btn btn--ghost btn--sm">Previous</a>
+                        {% endif %}
+                        {% if pagination.has_next %}
+                        <a href="/projects?page={{ pagination.page + 1 }}{% if search %}&search={{ search }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}" class="btn btn--ghost btn--sm">Next</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-state__icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+                    </svg>
+                </div>
+                <h3 class="empty-state__title">No projects found</h3>
+                <p class="empty-state__description">
+                    {% if search %}
+                    Try adjusting your search to find projects.
+                    {% else %}
+                    Get started by creating your first project.
+                    {% endif %}
+                </p>
+                {% if not search %}
+                <a href="/projects/create" class="btn btn--primary">Create Project</a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.projects-filters {
+    display: flex;
+    gap: var(--spacing-3);
+    flex-wrap: wrap;
+}
+
+.filters-form {
+    display: flex;
+    gap: var(--spacing-3);
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-1);
+}
+
+.project-key {
+    font-family: var(--font-mono);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-primary);
+}
+
+.project-name {
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text);
+    text-decoration: none;
+}
+
+.project-name:hover {
+    color: var(--color-primary);
+    text-decoration: underline;
+}
+
+.table-actions {
+    display: flex;
+    gap: var(--spacing-1);
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-12) var(--spacing-6);
+    text-align: center;
+}
+
+.empty-state__icon {
+    color: var(--color-text-muted);
+    margin-bottom: var(--spacing-4);
+}
+
+.empty-state__title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text);
+    margin-bottom: var(--spacing-2);
+}
+
+.empty-state__description {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--spacing-4);
+    max-width: 400px;
+}
+
+.pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--spacing-4);
+}
+
+.pagination__info {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+.pagination__controls {
+    display: flex;
+    gap: var(--spacing-2);
+}
+</style>
+{% endblock %}

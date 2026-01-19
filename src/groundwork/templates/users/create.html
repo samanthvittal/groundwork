@@ -1,0 +1,210 @@
+{% extends "layouts/app.html" %}
+
+{% block title %}Create User{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+    <div class="page-header__content">
+        <nav class="breadcrumbs">
+            <a href="/users" class="breadcrumbs__link">Users</a>
+            <span class="breadcrumbs__separator">/</span>
+            <span class="breadcrumbs__current">Create</span>
+        </nav>
+        <h1 class="page-header__title">Create User</h1>
+        <p class="page-header__description">Add a new user to the system</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="user-create">
+    <div class="card" style="max-width: 600px;">
+        <div class="card__header">
+            <h2 class="card__title">User Information</h2>
+        </div>
+        <div class="card__body">
+            {% if error %}
+            <div class="alert alert--error" style="margin-bottom: var(--spacing-4);">
+                <div class="alert__content">
+                    <p class="alert__message">{{ error }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <form method="post" action="/users/create" class="form">
+                <!-- Email -->
+                <div class="form-group{% if errors and errors.email %} form-group--error{% endif %}">
+                    <label class="form-label form-label--required" for="email">Email</label>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        class="form-input"
+                        value="{{ email or '' }}"
+                        required
+                        autofocus
+                        placeholder="user@example.com"
+                    >
+                    {% if errors and errors.email %}
+                    <span class="form-error">{{ errors.email }}</span>
+                    {% else %}
+                    <span class="form-hint">User's login email address</span>
+                    {% endif %}
+                </div>
+
+                <!-- First Name -->
+                <div class="form-group{% if errors and errors.first_name %} form-group--error{% endif %}">
+                    <label class="form-label form-label--required" for="first_name">First Name</label>
+                    <input
+                        type="text"
+                        id="first_name"
+                        name="first_name"
+                        class="form-input"
+                        value="{{ first_name or '' }}"
+                        required
+                    >
+                    {% if errors and errors.first_name %}
+                    <span class="form-error">{{ errors.first_name }}</span>
+                    {% endif %}
+                </div>
+
+                <!-- Last Name -->
+                <div class="form-group{% if errors and errors.last_name %} form-group--error{% endif %}">
+                    <label class="form-label form-label--required" for="last_name">Last Name</label>
+                    <input
+                        type="text"
+                        id="last_name"
+                        name="last_name"
+                        class="form-input"
+                        value="{{ last_name or '' }}"
+                        required
+                    >
+                    {% if errors and errors.last_name %}
+                    <span class="form-error">{{ errors.last_name }}</span>
+                    {% endif %}
+                </div>
+
+                <!-- Password -->
+                <div class="form-group{% if errors and errors.password %} form-group--error{% endif %}">
+                    <label class="form-label form-label--required" for="password">Password</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        class="form-input"
+                        required
+                        minlength="8"
+                    >
+                    {% if errors and errors.password %}
+                    <span class="form-error">{{ errors.password }}</span>
+                    {% else %}
+                    <span class="form-hint">Minimum 8 characters</span>
+                    {% endif %}
+                </div>
+
+                <!-- Confirm Password -->
+                <div class="form-group{% if errors and errors.confirm_password %} form-group--error{% endif %}">
+                    <label class="form-label form-label--required" for="confirm_password">Confirm Password</label>
+                    <input
+                        type="password"
+                        id="confirm_password"
+                        name="confirm_password"
+                        class="form-input"
+                        required
+                        minlength="8"
+                    >
+                    {% if errors and errors.confirm_password %}
+                    <span class="form-error">{{ errors.confirm_password }}</span>
+                    {% endif %}
+                </div>
+
+                <!-- Role -->
+                <div class="form-group{% if errors and errors.role_id %} form-group--error{% endif %}">
+                    <label class="form-label form-label--required" for="role_id">Role</label>
+                    <select
+                        id="role_id"
+                        name="role_id"
+                        class="form-select"
+                        required
+                    >
+                        <option value="">Select a role</option>
+                        {% for role in roles %}
+                        <option value="{{ role.id }}" {% if selected_role_id == role.id|string %}selected{% endif %}>
+                            {{ role.name }}{% if role.is_system %} (System){% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% if errors and errors.role_id %}
+                    <span class="form-error">{{ errors.role_id }}</span>
+                    {% else %}
+                    <span class="form-hint">Determines user permissions</span>
+                    {% endif %}
+                </div>
+
+                <!-- Active Status -->
+                <div class="form-group">
+                    <div class="form-checkbox">
+                        <input
+                            type="checkbox"
+                            id="is_active"
+                            name="is_active"
+                            value="true"
+                            {% if is_active is not defined or is_active %}checked{% endif %}
+                        >
+                        <label for="is_active">Active</label>
+                    </div>
+                    <span class="form-hint">Inactive users cannot log in</span>
+                </div>
+
+                <div class="form-actions form-actions--between" style="margin-top: var(--spacing-6);">
+                    <a href="/users" class="btn btn--secondary">Cancel</a>
+                    <button type="submit" class="btn btn--primary">Create User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-2);
+}
+
+.breadcrumbs__link {
+    color: var(--color-text-secondary);
+}
+
+.breadcrumbs__link:hover {
+    color: var(--color-primary);
+}
+
+.breadcrumbs__separator {
+    color: var(--color-text-muted);
+}
+
+.breadcrumbs__current {
+    color: var(--color-text);
+}
+
+.form-checkbox {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+}
+
+.form-checkbox input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--color-primary);
+}
+
+.form-checkbox label {
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+}
+</style>
+{% endblock %}

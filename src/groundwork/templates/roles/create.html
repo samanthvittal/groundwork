@@ -1,0 +1,225 @@
+{% extends "layouts/app.html" %}
+
+{% block title %}Create Role{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+    <div class="page-header__content">
+        <nav class="breadcrumbs">
+            <a href="/roles" class="breadcrumbs__link">Roles</a>
+            <span class="breadcrumbs__separator">/</span>
+            <span class="breadcrumbs__current">Create</span>
+        </nav>
+        <h1 class="page-header__title">Create Role</h1>
+        <p class="page-header__description">Create a new role with specific permissions</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="role-create">
+    <div class="card" style="max-width: 800px;">
+        <div class="card__header">
+            <h2 class="card__title">Role Information</h2>
+        </div>
+        <div class="card__body">
+            {% if error %}
+            <div class="alert alert--error" style="margin-bottom: var(--spacing-4);">
+                <div class="alert__content">
+                    <p class="alert__message">{{ error }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <form method="post" action="/roles/create" class="form">
+                <!-- Name -->
+                <div class="form-group{% if errors and errors.name %} form-group--error{% endif %}">
+                    <label class="form-label form-label--required" for="name">Name</label>
+                    <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        class="form-input"
+                        value="{{ name or '' }}"
+                        required
+                        autofocus
+                        placeholder="e.g., Editor, Viewer, Manager"
+                    >
+                    {% if errors and errors.name %}
+                    <span class="form-error">{{ errors.name }}</span>
+                    {% else %}
+                    <span class="form-hint">A unique name for this role</span>
+                    {% endif %}
+                </div>
+
+                <!-- Description -->
+                <div class="form-group{% if errors and errors.description %} form-group--error{% endif %}">
+                    <label class="form-label form-label--required" for="description">Description</label>
+                    <textarea
+                        id="description"
+                        name="description"
+                        class="form-input form-textarea"
+                        required
+                        rows="3"
+                        placeholder="Describe what this role is for..."
+                    >{{ description or '' }}</textarea>
+                    {% if errors and errors.description %}
+                    <span class="form-error">{{ errors.description }}</span>
+                    {% else %}
+                    <span class="form-hint">A brief description of the role's purpose</span>
+                    {% endif %}
+                </div>
+
+                <!-- Permissions -->
+                <div class="form-group">
+                    <label class="form-label">Permissions</label>
+                    <span class="form-hint" style="margin-bottom: var(--spacing-3); display: block;">
+                        Select the permissions for this role
+                    </span>
+
+                    {% if permissions %}
+                    <div class="permissions-grid">
+                        {% set grouped_perms = {} %}
+                        {% for perm in permissions %}
+                            {% set category = perm.codename.split(':')[0] %}
+                            {% if category not in grouped_perms %}
+                                {% set _ = grouped_perms.update({category: []}) %}
+                            {% endif %}
+                            {% set _ = grouped_perms[category].append(perm) %}
+                        {% endfor %}
+
+                        {% for category, perms in grouped_perms.items() %}
+                        <div class="permission-category">
+                            <h4 class="permission-category__title">{{ category|capitalize }}</h4>
+                            <div class="permission-category__items">
+                                {% for perm in perms %}
+                                <label class="permission-checkbox">
+                                    <input
+                                        type="checkbox"
+                                        name="permissions"
+                                        value="{{ perm.id }}"
+                                        {% if selected_permissions and perm.id|string in selected_permissions %}checked{% endif %}
+                                    >
+                                    <span class="permission-checkbox__content">
+                                        <span class="permission-checkbox__code">{{ perm.codename }}</span>
+                                        <span class="permission-checkbox__description">{{ perm.description }}</span>
+                                    </span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-secondary">No permissions available.</p>
+                    {% endif %}
+                </div>
+
+                <div class="form-actions form-actions--between" style="margin-top: var(--spacing-6);">
+                    <a href="/roles" class="btn btn--secondary">Cancel</a>
+                    <button type="submit" class="btn btn--primary">Create Role</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-2);
+}
+
+.breadcrumbs__link {
+    color: var(--color-text-secondary);
+}
+
+.breadcrumbs__link:hover {
+    color: var(--color-primary);
+}
+
+.breadcrumbs__separator {
+    color: var(--color-text-muted);
+}
+
+.breadcrumbs__current {
+    color: var(--color-text);
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.permissions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--spacing-6);
+}
+
+.permission-category {
+    background: var(--color-bg-subtle);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-4);
+}
+
+.permission-category__title {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text);
+    text-transform: capitalize;
+    margin-bottom: var(--spacing-3);
+    padding-bottom: var(--spacing-2);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.permission-category__items {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+}
+
+.permission-checkbox {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-3);
+    padding: var(--spacing-2);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.permission-checkbox:hover {
+    background: var(--color-bg-hover);
+}
+
+.permission-checkbox input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    accent-color: var(--color-primary);
+    flex-shrink: 0;
+}
+
+.permission-checkbox__content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.permission-checkbox__code {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text);
+    font-family: var(--font-mono);
+}
+
+.permission-checkbox__description {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+}
+</style>
+{% endblock %}

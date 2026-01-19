@@ -124,7 +124,13 @@ class RefreshToken(Base):
 
 
 class PasswordResetToken(Base):
-    """Password reset token."""
+    """Password reset token.
+
+    Uses selector+validator pattern to prevent timing attacks:
+    - token_selector: stored unhashed, used for O(1) lookup
+    - token_hash: hash of the validator portion only
+    - Full token format: {selector}.{validator}
+    """
 
     __tablename__ = "password_reset_tokens"
 
@@ -134,7 +140,8 @@ class PasswordResetToken(Base):
     user_id: Mapped[PythonUUID] = mapped_column(
         PostgresUUID(as_uuid=True), ForeignKey("users.id"), index=True
     )
-    token_hash: Mapped[str] = mapped_column(String(255), index=True)
+    token_selector: Mapped[str] = mapped_column(String(32), unique=True, index=True)
+    token_hash: Mapped[str] = mapped_column(String(255))
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     used_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True

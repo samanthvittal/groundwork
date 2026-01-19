@@ -21,9 +21,11 @@ class PasswordResetRequest(BaseModel):
 
 
 class PasswordResetConfirm(BaseModel):
-    """Password reset confirmation."""
+    """Password reset confirmation.
 
-    token: str
+    Note: token is provided in URL path, not in body.
+    """
+
     new_password: str = Field(min_length=8)
 
 

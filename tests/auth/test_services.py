@@ -189,7 +189,12 @@ async def test_request_password_reset_returns_token_for_existing_user() -> None:
 
     assert result is not None
     assert isinstance(result, str)
-    assert len(result) > 0
+    # Token format should be selector.validator
+    assert "." in result
+    parts = result.split(".", 1)
+    assert len(parts) == 2
+    assert len(parts[0]) == 16  # selector is 16 chars
+    assert len(parts[1]) > 0  # validator has content
     mock_db.add.assert_called_once()
     mock_db.flush.assert_called_once()
 
@@ -244,11 +249,15 @@ async def test_confirm_password_reset_success() -> None:
     from groundwork.auth.utils import hash_password
 
     user_id = uuid4()
-    raw_token = "test-reset-token"
-    token_hash = hash_password(raw_token)
+    # Token format: selector.validator
+    selector = "test-selector-1234"
+    validator = "test-validator-secret"
+    full_token = f"{selector}.{validator}"
+    validator_hash = hash_password(validator)
 
     mock_reset_token = MagicMock()
-    mock_reset_token.token_hash = token_hash
+    mock_reset_token.token_selector = selector
+    mock_reset_token.token_hash = validator_hash
     mock_reset_token.user_id = user_id
     mock_reset_token.used_at = None
     mock_reset_token.expires_at = datetime.now(UTC) + timedelta(hours=1)
@@ -260,9 +269,9 @@ async def test_confirm_password_reset_success() -> None:
     mock_refresh_token = MagicMock()
     mock_refresh_token.revoked_at = None
 
-    # Set up mock db responses
+    # Set up mock db responses - O(1) lookup by selector
     mock_token_result = MagicMock()
-    mock_token_result.scalars.return_value.all.return_value = [mock_reset_token]
+    mock_token_result.scalar_one_or_none.return_value = mock_reset_token
 
     mock_user_result = MagicMock()
     mock_user_result.scalar_one_or_none.return_value = mock_user
@@ -279,7 +288,7 @@ async def test_confirm_password_reset_success() -> None:
 
     with patch("groundwork.auth.services.LocalAuthProvider"):
         service = AuthService(mock_db)
-        result = await service.confirm_password_reset(raw_token, "newpassword123")
+        result = await service.confirm_password_reset(full_token, "newpassword123")
 
     assert result is True
     assert mock_reset_token.used_at is not None
@@ -289,19 +298,73 @@ async def test_confirm_password_reset_success() -> None:
 
 
 @pytest.mark.asyncio
-async def test_confirm_password_reset_invalid_token() -> None:
-    """AuthService.confirm_password_reset should return False for invalid token."""
+async def test_confirm_password_reset_invalid_format_no_dot() -> None:
+    """AuthService.confirm_password_reset should return False for token without dot."""
     from groundwork.auth.services import AuthService
 
+    mock_db = AsyncMock()
+
+    with patch("groundwork.auth.services.LocalAuthProvider"):
+        service = AuthService(mock_db)
+        result = await service.confirm_password_reset(
+            "invalid-token-no-dot", "newpassword123"
+        )
+
+    assert result is False
+    # No database call should be made for invalid format
+    mock_db.execute.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_confirm_password_reset_selector_not_found() -> None:
+    """AuthService.confirm_password_reset should return False when selector not found."""
+    from groundwork.auth.services import AuthService
+
+    # Token with valid format but selector doesn't exist
     mock_token_result = MagicMock()
-    mock_token_result.scalars.return_value.all.return_value = []
+    mock_token_result.scalar_one_or_none.return_value = None
 
     mock_db = AsyncMock()
     mock_db.execute.return_value = mock_token_result
 
     with patch("groundwork.auth.services.LocalAuthProvider"):
         service = AuthService(mock_db)
-        result = await service.confirm_password_reset("invalid-token", "newpassword123")
+        result = await service.confirm_password_reset(
+            "unknown-selector.some-validator", "newpassword123"
+        )
+
+    assert result is False
+
+
+@pytest.mark.asyncio
+async def test_confirm_password_reset_wrong_validator() -> None:
+    """AuthService.confirm_password_reset should return False for wrong validator."""
+    from groundwork.auth.services import AuthService
+    from groundwork.auth.utils import hash_password
+
+    user_id = uuid4()
+    selector = "test-selector"
+    correct_validator = "correct-validator"
+
+    mock_reset_token = MagicMock()
+    mock_reset_token.token_selector = selector
+    mock_reset_token.token_hash = hash_password(correct_validator)
+    mock_reset_token.user_id = user_id
+    mock_reset_token.used_at = None
+    mock_reset_token.expires_at = datetime.now(UTC) + timedelta(hours=1)
+
+    mock_token_result = MagicMock()
+    mock_token_result.scalar_one_or_none.return_value = mock_reset_token
+
+    mock_db = AsyncMock()
+    mock_db.execute.return_value = mock_token_result
+
+    with patch("groundwork.auth.services.LocalAuthProvider"):
+        service = AuthService(mock_db)
+        # Use wrong validator
+        result = await service.confirm_password_reset(
+            f"{selector}.wrong-validator", "newpassword123"
+        )
 
     assert result is False
 
@@ -311,18 +374,18 @@ async def test_confirm_password_reset_expired_token() -> None:
     """AuthService.confirm_password_reset should return False for expired token."""
     from groundwork.auth.services import AuthService
 
-    raw_token = "expired-token"
-
     # Token exists but is expired (query should not return it due to expiry filter)
     mock_token_result = MagicMock()
-    mock_token_result.scalars.return_value.all.return_value = []
+    mock_token_result.scalar_one_or_none.return_value = None
 
     mock_db = AsyncMock()
     mock_db.execute.return_value = mock_token_result
 
     with patch("groundwork.auth.services.LocalAuthProvider"):
         service = AuthService(mock_db)
-        result = await service.confirm_password_reset(raw_token, "newpassword123")
+        result = await service.confirm_password_reset(
+            "selector.expired-validator", "newpassword123"
+        )
 
     assert result is False
 
@@ -334,11 +397,15 @@ async def test_confirm_password_reset_revokes_all_refresh_tokens() -> None:
     from groundwork.auth.utils import hash_password
 
     user_id = uuid4()
-    raw_token = "test-reset-token"
-    token_hash = hash_password(raw_token)
+    # Token format: selector.validator
+    selector = "revoke-selector"
+    validator = "revoke-validator"
+    full_token = f"{selector}.{validator}"
+    validator_hash = hash_password(validator)
 
     mock_reset_token = MagicMock()
-    mock_reset_token.token_hash = token_hash
+    mock_reset_token.token_selector = selector
+    mock_reset_token.token_hash = validator_hash
     mock_reset_token.user_id = user_id
     mock_reset_token.used_at = None
     mock_reset_token.expires_at = datetime.now(UTC) + timedelta(hours=1)
@@ -353,8 +420,9 @@ async def test_confirm_password_reset_revokes_all_refresh_tokens() -> None:
     mock_refresh_token2 = MagicMock()
     mock_refresh_token2.revoked_at = None
 
+    # O(1) lookup by selector
     mock_token_result = MagicMock()
-    mock_token_result.scalars.return_value.all.return_value = [mock_reset_token]
+    mock_token_result.scalar_one_or_none.return_value = mock_reset_token
 
     mock_user_result = MagicMock()
     mock_user_result.scalar_one_or_none.return_value = mock_user
@@ -374,7 +442,7 @@ async def test_confirm_password_reset_revokes_all_refresh_tokens() -> None:
 
     with patch("groundwork.auth.services.LocalAuthProvider"):
         service = AuthService(mock_db)
-        result = await service.confirm_password_reset(raw_token, "newpassword123")
+        result = await service.confirm_password_reset(full_token, "newpassword123")
 
     assert result is True
     assert mock_refresh_token1.revoked_at is not None

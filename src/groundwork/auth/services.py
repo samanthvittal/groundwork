@@ -146,6 +146,9 @@ class AuthService:
         """Generate password reset token for email.
 
         Returns the raw token (to be sent via email) or None if user not found.
+        Token format: {selector}.{validator}
+        - selector: 16 chars, stored unhashed for O(1) lookup
+        - validator: 32 chars, hashed for security
         """
         result = await self.db.execute(select(User).where(User.email == email))
         user = result.scalar_one_or_none()
@@ -153,46 +156,59 @@ class AuthService:
         if user is None or not user.is_active:
             return None
 
-        # Generate token
-        raw_token = secrets.token_urlsafe(32)
+        # Generate selector (for lookup) and validator (for verification)
+        selector = secrets.token_urlsafe(16)[:16]  # Ensure exactly 16 chars
+        validator = secrets.token_urlsafe(32)
 
-        # Store hashed token
+        # Store selector unhashed (for lookup), validator hashed (for security)
         token_record = PasswordResetToken(
             user_id=user.id,
-            token_hash=hash_password(raw_token),
+            token_selector=selector,
+            token_hash=hash_password(validator),
             expires_at=datetime.now(UTC) + timedelta(hours=1),
         )
         self.db.add(token_record)
         await self.db.flush()
 
-        return raw_token
+        # Return combined token
+        return f"{selector}.{validator}"
 
     async def confirm_password_reset(self, token: str, new_password: str) -> bool:
         """Reset password using token.
 
         Returns True if successful, False if token invalid/expired.
+        Token format: {selector}.{validator}
+        Uses O(1) lookup by selector, then verifies validator hash.
         """
-        # Find valid tokens (not used, not expired)
+        # Parse token into selector and validator
+        if "." not in token:
+            return False
+
+        parts = token.split(".", 1)
+        if len(parts) != 2:
+            return False
+
+        selector, validator = parts
+
+        # O(1) lookup by selector - prevents timing attacks
         reset_token_result = await self.db.execute(
             select(PasswordResetToken)
+            .where(PasswordResetToken.token_selector == selector)
             .where(PasswordResetToken.used_at.is_(None))
             .where(PasswordResetToken.expires_at > datetime.now(UTC))
         )
-        tokens = reset_token_result.scalars().all()
+        reset_token = reset_token_result.scalar_one_or_none()
 
-        # Verify token hash
-        valid_token: PasswordResetToken | None = None
-        for t in tokens:
-            if verify_password(token, t.token_hash):
-                valid_token = t
-                break
+        if reset_token is None:
+            return False
 
-        if valid_token is None:
+        # Verify validator against stored hash
+        if not verify_password(validator, reset_token.token_hash):
             return False
 
         # Get user and update password
         user_result = await self.db.execute(
-            select(User).where(User.id == valid_token.user_id)
+            select(User).where(User.id == reset_token.user_id)
         )
         user = user_result.scalar_one_or_none()
 
@@ -203,7 +219,7 @@ class AuthService:
         user.hashed_password = hash_password(new_password)
 
         # Mark token as used
-        valid_token.used_at = datetime.now(UTC)
+        reset_token.used_at = datetime.now(UTC)
 
         # Revoke all refresh tokens for user
         refresh_token_result = await self.db.execute(

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{#
+    Public Layout - Login, Setup, and other public pages
+    Centered card layout without TopBar or Sidebar
+#}
+
+{% block body %}
+<div class="public-layout">
+    <main class="public-layout__main" role="main">
+        <div class="public-layout__container">
+            <div class="public-layout__card">
+                <!-- Logo -->
+                <div class="public-layout__logo">
+                    <svg class="public-layout__logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                        <path d="M2 17l10 5 10-5"></path>
+                        <path d="M2 12l10 5 10-5"></path>
+                    </svg>
+                    <span class="public-layout__logo-text">{{ instance_name|default('Groundwork') }}</span>
+                </div>
+
+                {% block card_header %}
+                    {% if page_title %}
+                    <h1 class="public-layout__title">{{ page_title }}</h1>
+                    {% endif %}
+                    {% if page_subtitle %}
+                    <p class="public-layout__subtitle">{{ page_subtitle }}</p>
+                    {% endif %}
+                {% endblock %}
+
+                {% block content %}
+                    <!-- Form content goes here -->
+                {% endblock %}
+            </div>
+
+            {% block below_card %}
+                <!-- Optional content below the card (e.g., "Don't have an account?") -->
+            {% endblock %}
+        </div>
+    </main>
+
+    <!-- Public Footer -->
+    <footer class="public-footer">
+        <p>&copy; {{ current_year|default('2025') }} {{ instance_name|default('Groundwork') }}. All rights reserved.</p>
+    </footer>
+</div>
+{% endblock %}

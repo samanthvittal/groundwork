@@ -1,0 +1,181 @@
+/* ============================================
+   Dark Theme
+   ============================================ */
+
+[data-theme="dark"] {
+    /* Primary Colors - Adjusted for dark mode */
+    --color-primary: #3b82f6;
+    --color-primary-hover: #60a5fa;
+    --color-primary-light: #1e3a5f;
+    --color-secondary: #94a3b8;
+    --color-secondary-hover: #cbd5e1;
+
+    /* Status Colors - Adjusted for dark mode */
+    --color-success: #22c55e;
+    --color-success-light: #14532d;
+    --color-warning: #eab308;
+    --color-warning-light: #422006;
+    --color-error: #ef4444;
+    --color-error-light: #450a0a;
+    --color-info: #22d3ee;
+    --color-info-light: #083344;
+
+    /* Neutral Colors - Inverted for dark mode */
+    --color-white: #0f172a;
+    --color-black: #ffffff;
+    --color-gray-50: #0f172a;
+    --color-gray-100: #1e293b;
+    --color-gray-200: #334155;
+    --color-gray-300: #475569;
+    --color-gray-400: #64748b;
+    --color-gray-500: #94a3b8;
+    --color-gray-600: #cbd5e1;
+    --color-gray-700: #e2e8f0;
+    --color-gray-800: #f1f5f9;
+    --color-gray-900: #f8fafc;
+
+    /* Semantic Colors - Dark mode */
+    --color-bg: #0f172a;
+    --color-bg-secondary: #1e293b;
+    --color-bg-tertiary: #334155;
+    --color-text: #f8fafc;
+    --color-text-secondary: #cbd5e1;
+    --color-text-muted: #64748b;
+    --color-border: #334155;
+    --color-border-focus: #3b82f6;
+
+    /* Shadows for dark theme - More subtle */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.4);
+
+    /* Component-specific overrides for dark theme */
+    --topbar-bg: #1e293b;
+    --sidebar-bg: #1e293b;
+    --card-bg: #1e293b;
+    --modal-backdrop: rgba(0, 0, 0, 0.7);
+
+    /* Form inputs in dark mode */
+    color-scheme: dark;
+}
+
+/* Dark mode specific overrides */
+[data-theme="dark"] .topbar {
+    background-color: var(--topbar-bg);
+}
+
+[data-theme="dark"] .sidebar {
+    background-color: var(--sidebar-bg);
+}
+
+[data-theme="dark"] .card {
+    background-color: var(--card-bg);
+}
+
+[data-theme="dark"] .public-layout__card {
+    background-color: var(--card-bg);
+}
+
+[data-theme="dark"] .footer {
+    background-color: var(--topbar-bg);
+}
+
+[data-theme="dark"] .modal {
+    background-color: var(--card-bg);
+}
+
+[data-theme="dark"] .modal-backdrop {
+    background-color: var(--modal-backdrop);
+}
+
+[data-theme="dark"] .dropdown__menu,
+[data-theme="dark"] .user-menu__dropdown {
+    background-color: var(--card-bg);
+}
+
+[data-theme="dark"] .loading-overlay {
+    background-color: rgba(15, 23, 42, 0.8);
+}
+
+/* Dark mode link colors */
+[data-theme="dark"] a {
+    color: var(--color-primary);
+}
+
+[data-theme="dark"] a:hover {
+    color: var(--color-primary-hover);
+}
+
+/* Dark mode code blocks */
+[data-theme="dark"] code {
+    background-color: var(--color-bg-tertiary);
+}
+
+[data-theme="dark"] pre {
+    background-color: var(--color-bg-tertiary);
+}
+
+/* Dark mode form elements */
+[data-theme="dark"] .form-input,
+[data-theme="dark"] .form-select,
+[data-theme="dark"] .form-textarea {
+    background-color: var(--color-bg-secondary);
+    border-color: var(--color-border);
+}
+
+[data-theme="dark"] .form-input:disabled,
+[data-theme="dark"] .form-select:disabled,
+[data-theme="dark"] .form-textarea:disabled {
+    background-color: var(--color-bg-tertiary);
+}
+
+/* Dark mode table */
+[data-theme="dark"] .table th {
+    background-color: var(--color-bg-tertiary);
+}
+
+[data-theme="dark"] .table tbody tr:hover {
+    background-color: var(--color-bg-tertiary);
+}
+
+[data-theme="dark"] .table--striped tbody tr:nth-child(odd) {
+    background-color: var(--color-bg-secondary);
+}
+
+/* Dark mode button adjustments */
+[data-theme="dark"] .btn--secondary {
+    background-color: var(--color-bg-secondary);
+    border-color: var(--color-border);
+}
+
+[data-theme="dark"] .btn--secondary:hover {
+    background-color: var(--color-bg-tertiary);
+}
+
+[data-theme="dark"] .btn--ghost:hover {
+    background-color: var(--color-bg-tertiary);
+}
+
+/* Dark mode scrollbar (for browsers that support it) */
+[data-theme="dark"] {
+    scrollbar-color: var(--color-gray-400) var(--color-bg-secondary);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-track {
+    background: var(--color-bg-secondary);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+    background: var(--color-gray-400);
+    border-radius: 4px;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-gray-500);
+}

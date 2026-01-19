@@ -533,6 +533,31 @@ async def test_update_role_requires_permission(
     assert response.status_code == 403
 
 
+@pytest.mark.asyncio
+async def test_update_role_duplicate_name_returns_409(
+    app: FastAPI, mock_db: AsyncMock, mock_user: MagicMock
+) -> None:
+    """PATCH /roles/{id} should return 409 for duplicate name."""
+    app.dependency_overrides[get_db] = lambda: mock_db
+    app.dependency_overrides[get_current_user] = lambda: mock_user
+
+    with patch("groundwork.roles.routes.RoleService") as mock_service_class:
+        mock_service = AsyncMock()
+        mock_service.update_role.return_value = "duplicate"
+        mock_service_class.return_value = mock_service
+
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            response = await client.patch(
+                f"/api/v1/roles/{uuid4()}",
+                json={"name": "existing_role"},
+            )
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "Role with this name already exists"
+
+
 # =============================================================================
 # DELETE /api/v1/roles/{id} - Delete role (non-system only)
 # =============================================================================

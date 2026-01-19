@@ -130,20 +130,26 @@ async def update_role(
     """
     uuid = parse_uuid(role_id)
     service = RoleService(db)
-    role = await service.update_role(
+    result = await service.update_role(
         role_id=uuid,
         name=request.name,
         description=request.description,
         permission_ids=request.permission_ids,
     )
 
-    if role is None:
+    if result is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Role not found",
         )
 
-    return RoleDetailResponse.model_validate(role)
+    if result == "duplicate":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Role with this name already exists",
+        )
+
+    return RoleDetailResponse.model_validate(result)
 
 
 @router.delete("/{role_id}", status_code=status.HTTP_204_NO_CONTENT)

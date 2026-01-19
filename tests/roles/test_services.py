@@ -256,6 +256,64 @@ async def test_update_role_not_found(db_session: AsyncSession) -> None:
     assert role is None
 
 
+@pytest.mark.asyncio
+async def test_update_role_duplicate_name(db_session: AsyncSession) -> None:
+    """update_role should return 'duplicate' when renaming to existing name."""
+    from groundwork.roles.services import RoleService
+
+    service = RoleService(db_session)
+
+    # Create two roles
+    role1 = await service.create_role(
+        name="role_one",
+        description="First role",
+        permission_ids=[],
+    )
+    await service.create_role(
+        name="role_two",
+        description="Second role",
+        permission_ids=[],
+    )
+
+    assert role1 is not None
+
+    # Try to rename role1 to role_two's name
+    result = await service.update_role(
+        role_id=role1.id,
+        name="role_two",
+    )
+
+    assert result == "duplicate"
+
+
+@pytest.mark.asyncio
+async def test_update_role_same_name_allowed(db_session: AsyncSession) -> None:
+    """update_role should allow updating a role to its own name."""
+    from groundwork.roles.services import RoleService
+
+    service = RoleService(db_session)
+
+    # Create a role
+    role = await service.create_role(
+        name="same_name_role",
+        description="Test role",
+        permission_ids=[],
+    )
+
+    assert role is not None
+
+    # Update with same name should succeed
+    result = await service.update_role(
+        role_id=role.id,
+        name="same_name_role",
+        description="Updated description",
+    )
+
+    assert result is not None
+    assert result != "duplicate"
+    assert result.description == "Updated description"
+
+
 # =============================================================================
 # delete_role
 # =============================================================================

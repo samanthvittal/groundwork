@@ -74,17 +74,28 @@ class RoleService:
         name: str | None = None,
         description: str | None = None,
         permission_ids: list[UUID] | None = None,
-    ) -> Role | None:
+    ) -> Role | None | str:
         """Update role fields.
 
-        Returns updated role, or None if role not found.
+        Returns:
+            Updated role if successful
+            None if role not found
+            "duplicate" if name already exists on another role
         Only provided (non-None) fields are updated.
         """
         role = await self.get_role(role_id)
         if role is None:
             return None
 
-        if name is not None:
+        if name is not None and name != role.name:
+            # Check if new name already exists on another role
+            existing = await self.db.execute(
+                select(Role).where(Role.name == name).where(Role.id != role_id)
+            )
+            if existing.scalar_one_or_none() is not None:
+                return "duplicate"
+            role.name = name
+        elif name is not None:
             role.name = name
         if description is not None:
             role.description = description

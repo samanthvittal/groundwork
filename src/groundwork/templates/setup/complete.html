@@ -1,0 +1,36 @@
+{% extends "layouts/public.html" %}
+
+{% block title %}Setup Complete{% endblock %}
+
+{% block card_header %}
+<div class="success-icon text-center">
+  <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-success">
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+    <polyline points="22 4 12 14.01 9 11.01"/>
+  </svg>
+</div>
+
+<h1 class="public-layout__title text-center">Groundwork is Ready!</h1>
+<p class="public-layout__subtitle text-center">Your instance has been configured successfully.</p>
+{% endblock %}
+
+{% block content %}
+<div class="setup-summary">
+  <div class="summary-item">
+    <span class="label">Instance</span>
+    <span class="value">{{ instance_name }}</span>
+  </div>
+  <div class="summary-item">
+    <span class="label">Admin</span>
+    <span class="value">{{ admin_email }}</span>
+  </div>
+  <div class="summary-item">
+    <span class="label">Email</span>
+    <span class="value">{{ 'Configured' if smtp_configured else 'Not configured' }}</span>
+  </div>
+</div>
+
+<a href="/login" class="btn btn-primary btn-lg w-full">
+  Go to Login
+</a>
+{% endblock %}

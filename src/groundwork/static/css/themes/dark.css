@@ -157,6 +157,31 @@
     background-color: var(--color-bg-tertiary);
 }
 
+/* Fix button text color - use actual white instead of inverted --color-white */
+[data-theme="dark"] .btn--primary {
+    color: #ffffff;
+}
+
+[data-theme="dark"] .btn--primary:hover {
+    color: #ffffff;
+}
+
+[data-theme="dark"] .btn--danger {
+    color: #ffffff;
+}
+
+[data-theme="dark"] .btn--danger:hover {
+    color: #ffffff;
+}
+
+[data-theme="dark"] .btn--success {
+    color: #ffffff;
+}
+
+[data-theme="dark"] .btn--success:hover {
+    color: #ffffff;
+}
+
 /* Dark mode scrollbar (for browsers that support it) */
 [data-theme="dark"] {
     scrollbar-color: var(--color-gray-400) var(--color-bg-secondary);

@@ -91,7 +91,9 @@ class User(Base):
     updated_at: Mapped[datetime] = mapped_column(
         default=func.now(), onupdate=func.now()
     )
-    last_login_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    last_login_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     role: Mapped["Role"] = relationship(back_populates="users")
     refresh_tokens: Mapped[list["RefreshToken"]] = relationship(back_populates="user")
@@ -100,6 +102,18 @@ class User(Base):
     def full_name(self) -> str:
         """Return user's full name."""
         return f"{self.first_name} {self.last_name}"
+
+    @property
+    def is_admin(self) -> bool:
+        """Check if user has admin role."""
+        return self.role is not None and self.role.name == "Admin"
+
+    @property
+    def avatar_url(self) -> str | None:
+        """Return the avatar URL if avatar_path is set."""
+        if self.avatar_path:
+            return f"/static/avatars/{self.avatar_path}"
+        return None
 
 
 class RefreshToken(Base):

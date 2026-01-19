@@ -1,0 +1,138 @@
+{% extends "layouts/app.html" %}
+
+{% block title %}Edit Profile{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+    <div class="page-header__content">
+        <nav class="breadcrumbs">
+            <a href="/profile" class="breadcrumbs__link">Profile</a>
+            <span class="breadcrumbs__separator">/</span>
+            <span class="breadcrumbs__current">Edit</span>
+        </nav>
+        <h1 class="page-header__title">Edit Profile</h1>
+        <p class="page-header__description">Update your profile information</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="profile-edit">
+    <div class="card" style="max-width: 600px;">
+        <div class="card__header">
+            <h2 class="card__title">Profile Information</h2>
+        </div>
+        <div class="card__body">
+            {% if error %}
+            <div class="alert alert--error" style="margin-bottom: var(--spacing-4);">
+                <div class="alert__content">
+                    <p class="alert__message">{{ error }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if success %}
+            <div class="alert alert--success" style="margin-bottom: var(--spacing-4);">
+                <div class="alert__content">
+                    <p class="alert__message">{{ success }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <form method="post" action="/profile/edit" class="form">
+                <!-- Email (read-only) -->
+                <div class="form-group">
+                    <label class="form-label" for="email">Email</label>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        class="form-input"
+                        value="{{ user.email }}"
+                        disabled
+                    >
+                    <span class="form-hint">Email cannot be changed</span>
+                </div>
+
+                <!-- First Name -->
+                <div class="form-group{% if errors and errors.first_name %} form-group--error{% endif %}">
+                    <label class="form-label form-label--required" for="first_name">First Name</label>
+                    <input
+                        type="text"
+                        id="first_name"
+                        name="first_name"
+                        class="form-input"
+                        value="{{ first_name if first_name is defined else user.first_name }}"
+                        required
+                        autofocus
+                    >
+                    {% if errors and errors.first_name %}
+                    <span class="form-error">{{ errors.first_name }}</span>
+                    {% endif %}
+                </div>
+
+                <!-- Last Name -->
+                <div class="form-group{% if errors and errors.last_name %} form-group--error{% endif %}">
+                    <label class="form-label form-label--required" for="last_name">Last Name</label>
+                    <input
+                        type="text"
+                        id="last_name"
+                        name="last_name"
+                        class="form-input"
+                        value="{{ last_name if last_name is defined else user.last_name }}"
+                        required
+                    >
+                    {% if errors and errors.last_name %}
+                    <span class="form-error">{{ errors.last_name }}</span>
+                    {% endif %}
+                </div>
+
+                <!-- Display Name (optional) -->
+                <div class="form-group">
+                    <label class="form-label" for="display_name">Display Name</label>
+                    <input
+                        type="text"
+                        id="display_name"
+                        name="display_name"
+                        class="form-input"
+                        value="{{ display_name if display_name is defined else (user.display_name or '') }}"
+                        placeholder="Optional"
+                    >
+                    <span class="form-hint">This name will be shown instead of your full name</span>
+                </div>
+
+                <div class="form-actions form-actions--between" style="margin-top: var(--spacing-4);">
+                    <a href="/profile" class="btn btn--secondary">Cancel</a>
+                    <button type="submit" class="btn btn--primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-2);
+}
+
+.breadcrumbs__link {
+    color: var(--color-text-secondary);
+}
+
+.breadcrumbs__link:hover {
+    color: var(--color-primary);
+}
+
+.breadcrumbs__separator {
+    color: var(--color-text-muted);
+}
+
+.breadcrumbs__current {
+    color: var(--color-text);
+}
+</style>
+{% endblock %}

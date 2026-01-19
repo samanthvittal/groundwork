@@ -1,0 +1,29 @@
+{% extends "layouts/app.html" %}
+
+{% block title %}Coming Soon{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Coming Soon</h1>
+</div>
+
+<div class="card">
+    <div class="card__body" style="text-align: center; padding: var(--spacing-12);">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto var(--spacing-4); display: block; color: var(--color-text-muted);">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        <h2 style="margin-bottom: var(--spacing-2);">This feature is under development</h2>
+        <p class="text-secondary" style="margin-bottom: var(--spacing-6);">
+            We're working hard to bring you this feature. Check back soon!
+        </p>
+        <a href="/users" class="btn btn--secondary">
+            <svg class="btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            Back to Users
+        </a>
+    </div>
+</div>
+{% endblock %}

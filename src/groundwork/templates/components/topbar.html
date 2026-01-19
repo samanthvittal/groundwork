@@ -1,0 +1,98 @@
+{#
+    TopBar Component
+    - Left: Logo + instance name
+    - Right: User menu dropdown
+#}
+<header class="topbar" role="banner">
+    <div class="topbar__left">
+        <!-- Mobile menu toggle -->
+        <button
+            type="button"
+            class="topbar__toggle"
+            onclick="toggleSidebar()"
+            aria-label="Toggle navigation menu"
+            aria-expanded="false"
+            aria-controls="sidebar"
+        >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+
+        <!-- Logo -->
+        <a href="/" class="topbar__logo">
+            <svg class="topbar__logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                <path d="M2 17l10 5 10-5"></path>
+                <path d="M2 12l10 5 10-5"></path>
+            </svg>
+            <span class="topbar__logo-text">Groundwork</span>
+        </a>
+
+        <!-- Instance name -->
+        {% if instance_name %}
+        <span class="topbar__instance-name">{{ instance_name }}</span>
+        {% endif %}
+    </div>
+
+    <div class="topbar__right">
+        <!-- Theme toggle -->
+        <button
+            type="button"
+            class="btn btn--ghost btn--icon"
+            onclick="toggleTheme()"
+            aria-label="Toggle dark mode"
+            title="Toggle dark mode"
+        >
+            <!-- Sun icon (shown in dark mode) -->
+            <svg class="btn__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: none;" data-theme-icon="light">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <!-- Moon icon (shown in light mode) -->
+            <svg class="btn__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-theme-icon="dark">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+        </button>
+
+        <!-- User Menu -->
+        {% if current_user %}
+            {% include "components/user_menu.html" %}
+        {% else %}
+            <a href="/login" class="btn btn--primary">Sign In</a>
+        {% endif %}
+    </div>
+</header>
+
+<script>
+    // Update theme icon visibility based on current theme
+    function updateThemeIcons() {
+        const theme = document.documentElement.getAttribute('data-theme') || 'light';
+        const lightIcon = document.querySelector('[data-theme-icon="light"]');
+        const darkIcon = document.querySelector('[data-theme-icon="dark"]');
+
+        if (lightIcon && darkIcon) {
+            lightIcon.style.display = theme === 'dark' ? 'block' : 'none';
+            darkIcon.style.display = theme === 'light' ? 'block' : 'none';
+        }
+    }
+
+    // Run on load and when theme changes
+    document.addEventListener('DOMContentLoaded', updateThemeIcons);
+
+    // Override toggleTheme to also update icons
+    const originalToggleTheme = window.toggleTheme;
+    window.toggleTheme = function() {
+        if (originalToggleTheme) originalToggleTheme();
+        updateThemeIcons();
+    };
+</script>

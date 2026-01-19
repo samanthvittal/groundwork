@@ -1,0 +1,88 @@
+{#
+    Form Errors Partial
+    Used for displaying validation errors
+
+    Expected context:
+    - errors: dict mapping field names to list of error messages
+              OR list of general error messages
+    - field: Optional - if provided, only show errors for this field
+#}
+
+{% if errors %}
+    {% if field %}
+        {# Show errors for a specific field #}
+        {% if errors is mapping and errors[field] %}
+            {% for error in errors[field] %}
+            <div class="form-error">
+                <svg class="form-error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                </svg>
+                <span>{{ error }}</span>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% else %}
+        {# Show all errors #}
+        {% if errors is mapping %}
+            {# Dictionary of field -> errors #}
+            <div class="form-errors mb-4">
+                <div class="alert alert--error">
+                    <svg class="alert__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="15" y1="9" x2="9" y2="15"></line>
+                        <line x1="9" y1="9" x2="15" y2="15"></line>
+                    </svg>
+                    <div class="alert__content">
+                        <div class="alert__title">Please fix the following errors:</div>
+                        <ul class="alert__message" style="margin-top: 0.5rem; padding-left: 1rem;">
+                            {% for field_name, field_errors in errors.items() %}
+                                {% for error in field_errors %}
+                                <li>{{ field_name|replace('_', ' ')|title }}: {{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        {% elif errors is iterable and errors is not string %}
+            {# List of general errors #}
+            <div class="form-errors mb-4">
+                <div class="alert alert--error">
+                    <svg class="alert__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="15" y1="9" x2="9" y2="15"></line>
+                        <line x1="9" y1="9" x2="15" y2="15"></line>
+                    </svg>
+                    <div class="alert__content">
+                        {% if errors|length == 1 %}
+                        <div class="alert__message">{{ errors[0] }}</div>
+                        {% else %}
+                        <div class="alert__title">Please fix the following errors:</div>
+                        <ul class="alert__message" style="margin-top: 0.5rem; padding-left: 1rem;">
+                            {% for error in errors %}
+                            <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            {# Single error string #}
+            <div class="form-errors mb-4">
+                <div class="alert alert--error">
+                    <svg class="alert__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="15" y1="9" x2="9" y2="15"></line>
+                        <line x1="9" y1="9" x2="15" y2="15"></line>
+                    </svg>
+                    <div class="alert__content">
+                        <div class="alert__message">{{ errors }}</div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    {% endif %}
+{% endif %}

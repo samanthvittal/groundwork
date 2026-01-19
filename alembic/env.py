@@ -8,8 +8,11 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
+# Import models for autogenerate support
+from groundwork.auth import models as auth_models  # noqa: F401
 from groundwork.core.config import get_settings
 from groundwork.core.database import Base
+from groundwork.setup import models as setup_models  # noqa: F401
 
 # this is the Alembic Config object
 config = context.config

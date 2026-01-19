@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{#
+    App Layout - Logged-in users
+    Includes TopBar, Sidebar, and Footer
+#}
+
+{% block body %}
+<div class="app-layout" id="app-layout">
+    <!-- TopBar -->
+    {% include "components/topbar.html" %}
+
+    <!-- Sidebar overlay for mobile -->
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <!-- Main body with sidebar and content -->
+    <div class="app-layout__body">
+        <!-- Sidebar -->
+        {% include "components/sidebar.html" %}
+
+        <!-- Main content area -->
+        <main class="app-layout__main" id="main-content" role="main">
+            {% block page_header %}{% endblock %}
+
+            {% block content %}
+                <!-- Page content goes here -->
+            {% endblock %}
+        </main>
+    </div>
+
+    <!-- Footer -->
+    {% include "components/footer.html" %}
+</div>
+
+<script>
+    // Sidebar toggle functionality
+    function toggleSidebar() {
+        const layout = document.getElementById('app-layout');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+
+        // Check if on mobile
+        const isMobile = window.innerWidth <= 768;
+
+        if (isMobile) {
+            // On mobile, toggle open/close
+            sidebar.classList.toggle('sidebar--open');
+            overlay.classList.toggle('sidebar-overlay--visible');
+            document.body.style.overflow = sidebar.classList.contains('sidebar--open') ? 'hidden' : '';
+        } else {
+            // On desktop, toggle collapsed state
+            layout.classList.toggle('app-layout--sidebar-collapsed');
+            sidebar.classList.toggle('sidebar--collapsed');
+            // Remember preference
+            localStorage.setItem('sidebar-collapsed', sidebar.classList.contains('sidebar--collapsed'));
+        }
+    }
+
+    // Initialize sidebar state from localStorage
+    document.addEventListener('DOMContentLoaded', function() {
+        const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+        if (isCollapsed && window.innerWidth > 768) {
+            document.getElementById('app-layout').classList.add('app-layout--sidebar-collapsed');
+            document.getElementById('sidebar').classList.add('sidebar--collapsed');
+        }
+
+        // Close mobile sidebar on window resize
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768) {
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('sidebar-overlay');
+                sidebar.classList.remove('sidebar--open');
+                overlay.classList.remove('sidebar-overlay--visible');
+                document.body.style.overflow = '';
+            }
+        });
+
+        // Close sidebar on escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const sidebar = document.getElementById('sidebar');
+                if (sidebar.classList.contains('sidebar--open')) {
+                    toggleSidebar();
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

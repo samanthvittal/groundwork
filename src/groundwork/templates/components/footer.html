@@ -1,0 +1,14 @@
+{#
+    Footer Component
+    - Copyright notice
+    - Version number
+#}
+<footer class="footer" role="contentinfo">
+    <div class="footer__copyright">
+        <span>&copy; {{ current_year|default('2025') }} {{ instance_name|default('Groundwork') }}</span>
+    </div>
+
+    <div class="footer__version">
+        <span>Version {{ app_version|default('0.1.0') }}</span>
+    </div>
+</footer>

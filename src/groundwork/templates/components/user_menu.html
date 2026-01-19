@@ -1,0 +1,141 @@
+{#
+    User Menu Component
+    - Avatar + display name trigger
+    - Dropdown with Profile, Preferences, Logout
+#}
+<div class="user-menu" id="user-menu">
+    <button
+        type="button"
+        class="user-menu__trigger"
+        id="user-menu-trigger"
+        aria-expanded="false"
+        aria-haspopup="true"
+        aria-controls="user-menu-dropdown"
+        onclick="toggleUserMenu()"
+    >
+        <!-- Avatar -->
+        <div class="user-menu__avatar">
+            {% if current_user.avatar_url %}
+                <img src="{{ current_user.avatar_url }}" alt="{{ current_user.display_name }}'s avatar">
+            {% else %}
+                {{ current_user.display_name[:1]|upper if current_user.display_name else current_user.email[:1]|upper }}
+            {% endif %}
+        </div>
+
+        <!-- Display name -->
+        <span class="user-menu__name">{{ current_user.display_name or current_user.email.split('@')[0] }}</span>
+
+        <!-- Chevron -->
+        <svg class="user-menu__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+    </button>
+
+    <!-- Dropdown menu -->
+    <div class="user-menu__dropdown" id="user-menu-dropdown" role="menu" aria-labelledby="user-menu-trigger">
+        <!-- User info -->
+        <div class="user-menu__item" style="cursor: default; opacity: 0.7;">
+            <svg class="user-menu__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+            <span class="truncate">{{ current_user.email }}</span>
+        </div>
+
+        <div class="user-menu__divider"></div>
+
+        <!-- Profile link -->
+        <a href="/profile" class="user-menu__item" role="menuitem">
+            <svg class="user-menu__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span>Profile</span>
+        </a>
+
+        <!-- Preferences link -->
+        <a href="/preferences" class="user-menu__item" role="menuitem">
+            <svg class="user-menu__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="4" y1="21" x2="4" y2="14"></line>
+                <line x1="4" y1="10" x2="4" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12" y2="3"></line>
+                <line x1="20" y1="21" x2="20" y2="16"></line>
+                <line x1="20" y1="12" x2="20" y2="3"></line>
+                <line x1="1" y1="14" x2="7" y2="14"></line>
+                <line x1="9" y1="8" x2="15" y2="8"></line>
+                <line x1="17" y1="16" x2="23" y2="16"></line>
+            </svg>
+            <span>Preferences</span>
+        </a>
+
+        <div class="user-menu__divider"></div>
+
+        <!-- Logout button -->
+        <form action="/logout" method="POST" style="margin: 0;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button type="submit" class="user-menu__item user-menu__item--danger" role="menuitem">
+                <svg class="user-menu__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                <span>Sign out</span>
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // User menu toggle functionality
+    function toggleUserMenu() {
+        const trigger = document.getElementById('user-menu-trigger');
+        const dropdown = document.getElementById('user-menu-dropdown');
+        const isOpen = dropdown.classList.contains('user-menu__dropdown--open');
+
+        if (isOpen) {
+            closeUserMenu();
+        } else {
+            dropdown.classList.add('user-menu__dropdown--open');
+            trigger.setAttribute('aria-expanded', 'true');
+        }
+    }
+
+    function closeUserMenu() {
+        const trigger = document.getElementById('user-menu-trigger');
+        const dropdown = document.getElementById('user-menu-dropdown');
+        dropdown.classList.remove('user-menu__dropdown--open');
+        trigger.setAttribute('aria-expanded', 'false');
+    }
+
+    // Close menu when clicking outside
+    document.addEventListener('click', function(event) {
+        const userMenu = document.getElementById('user-menu');
+        if (userMenu && !userMenu.contains(event.target)) {
+            closeUserMenu();
+        }
+    });
+
+    // Close menu on Escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeUserMenu();
+        }
+    });
+
+    // Keyboard navigation within menu
+    document.getElementById('user-menu-dropdown')?.addEventListener('keydown', function(event) {
+        const items = this.querySelectorAll('[role="menuitem"]');
+        const currentIndex = Array.from(items).indexOf(document.activeElement);
+
+        if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            const nextIndex = (currentIndex + 1) % items.length;
+            items[nextIndex].focus();
+        } else if (event.key === 'ArrowUp') {
+            event.preventDefault();
+            const prevIndex = currentIndex <= 0 ? items.length - 1 : currentIndex - 1;
+            items[prevIndex].focus();
+        }
+    });
+</script>

@@ -69,6 +69,7 @@ async def roles_list(
         name="roles/list.html",
         context={
             "user": current_user,
+            "current_user": current_user,
             "roles": roles,
             "can_create": can_create,
             "can_update": can_update,
@@ -97,6 +98,7 @@ async def roles_create_form(
         name="roles/create.html",
         context={
             "user": current_user,
+            "current_user": current_user,
             "permissions": permissions,
         },
     )
@@ -145,6 +147,7 @@ async def roles_create_submit(
             name="roles/create.html",
             context={
                 "user": current_user,
+                "current_user": current_user,
                 "permissions": all_permissions,
                 "name": name,
                 "description": description,
@@ -173,6 +176,7 @@ async def roles_create_submit(
             name="roles/create.html",
             context={
                 "user": current_user,
+                "current_user": current_user,
                 "permissions": all_permissions,
                 "name": name,
                 "description": description,
@@ -224,6 +228,7 @@ async def roles_detail(
         name="roles/detail.html",
         context={
             "user": current_user,
+            "current_user": current_user,
             "role": role,
             "can_update": can_update,
             "can_delete": can_delete,
@@ -263,6 +268,7 @@ async def roles_edit_form(
         name="roles/edit.html",
         context={
             "user": current_user,
+            "current_user": current_user,
             "role": role,
             "permissions": permissions,
         },
@@ -324,6 +330,7 @@ async def roles_edit_submit(
             name="roles/edit.html",
             context={
                 "user": current_user,
+                "current_user": current_user,
                 "role": role,
                 "permissions": all_permissions,
                 "name": name,
@@ -356,6 +363,7 @@ async def roles_edit_submit(
             name="roles/edit.html",
             context={
                 "user": current_user,
+                "current_user": current_user,
                 "role": role,
                 "permissions": all_permissions,
                 "name": name,

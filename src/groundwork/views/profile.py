@@ -26,7 +26,7 @@ async def profile_view(
     return templates.TemplateResponse(
         request=request,
         name="profile/view.html",
-        context={"user": current_user},
+        context={"user": current_user, "current_user": current_user},
     )
 
 
@@ -40,7 +40,7 @@ async def profile_edit_form(
     return templates.TemplateResponse(
         request=request,
         name="profile/edit.html",
-        context={"user": current_user},
+        context={"user": current_user, "current_user": current_user},
     )
 
 
@@ -73,6 +73,7 @@ async def profile_edit_submit(
             name="profile/edit.html",
             context={
                 "user": current_user,
+                "current_user": current_user,
                 "first_name": first_name,
                 "last_name": last_name,
                 "display_name": display_name,
@@ -100,7 +101,7 @@ async def profile_settings_form(
     return templates.TemplateResponse(
         request=request,
         name="profile/settings.html",
-        context={"user": current_user},
+        context={"user": current_user, "current_user": current_user},
     )
 
 
@@ -181,6 +182,7 @@ async def _handle_password_change(
             name="profile/settings.html",
             context={
                 "user": user,
+                "current_user": user,
                 "errors": errors,
                 "password_error": "Please correct the errors below",
             },
@@ -196,6 +198,7 @@ async def _handle_password_change(
         name="profile/settings.html",
         context={
             "user": user,
+            "current_user": user,
             "password_success": "Your password has been updated successfully",
         },
     )
@@ -243,6 +246,7 @@ async def _handle_preferences_update(
         name="profile/settings.html",
         context={
             "user": user,
+            "current_user": user,
             "preferences_success": "Your preferences have been saved",
         },
     )

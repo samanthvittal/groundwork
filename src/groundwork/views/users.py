@@ -124,6 +124,7 @@ async def users_list(
         name="users/list.html",
         context={
             "user": current_user,
+            "current_user": current_user,
             "users": users,
             "roles": roles,
             "pagination": pagination,
@@ -154,6 +155,7 @@ async def users_create_form(
         name="users/create.html",
         context={
             "user": current_user,
+            "current_user": current_user,
             "roles": roles,
         },
     )
@@ -233,6 +235,7 @@ async def users_create_submit(
             name="users/create.html",
             context={
                 "user": current_user,
+                "current_user": current_user,
                 "roles": roles,
                 "email": email,
                 "first_name": first_name,
@@ -335,7 +338,6 @@ async def users_edit_form(
         request=request,
         name="users/edit.html",
         context={
-            "user": current_user,
             "current_user": current_user,
             "target_user": target_user,
             "roles": roles,

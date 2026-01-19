@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from groundwork.auth.models import User
+from groundwork.auth.models import Role, User
 from groundwork.auth.utils import decode_token
 from groundwork.core.database import get_db
 
@@ -50,7 +50,9 @@ async def get_current_user(
         ) from None
 
     result = await db.execute(
-        select(User).options(selectinload(User.role)).where(User.id == user_uuid)
+        select(User)
+        .options(selectinload(User.role).selectinload(Role.permissions))
+        .where(User.id == user_uuid)
     )
     user = result.scalar_one_or_none()
 

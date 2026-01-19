@@ -6,8 +6,9 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
 
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from groundwork.core.config import get_settings
@@ -128,9 +129,31 @@ def create_app() -> FastAPI:
     # View routes (HTML pages)
     app.include_router(setup_view_router, tags=["setup-views"])
     app.include_router(auth_view_router, tags=["auth-views"])
-    app.include_router(profile_view_router, prefix="/profile", tags=["profile-views"])
-    app.include_router(users_view_router, prefix="/users", tags=["users-views"])
-    app.include_router(roles_view_router, prefix="/roles", tags=["roles-views"])
+    app.include_router(profile_view_router, tags=["profile-views"])
+    app.include_router(users_view_router, tags=["users-views"])
+    app.include_router(roles_view_router, tags=["roles-views"])
+
+    # Root redirect - goes to users page (requires auth, so will redirect to login if needed)
+    @app.get("/")
+    async def root() -> RedirectResponse:
+        """Redirect root to users page."""
+        return RedirectResponse(url="/users", status_code=303)
+
+    # Exception handler for 401 errors - redirect to login for non-API routes
+    @app.exception_handler(HTTPException)
+    async def http_exception_handler(request: Request, exc: HTTPException) -> Response:
+        """Handle HTTP exceptions - redirect 401 to login for view routes."""
+        from fastapi.responses import JSONResponse
+
+        # For 401 errors on non-API routes, redirect to login
+        if exc.status_code == 401 and not request.url.path.startswith("/api/"):
+            return RedirectResponse(url="/login", status_code=303)
+
+        # For API routes or other errors, return JSON response
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.detail},
+        )
 
     return app
 

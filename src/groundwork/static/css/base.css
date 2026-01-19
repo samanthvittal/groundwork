@@ -44,20 +44,15 @@
     --color-border: var(--color-gray-200);
     --color-border-focus: var(--color-primary);
 
-    /* Typography */
-    --font-family-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
-                        Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans',
-                        'Helvetica Neue', sans-serif;
-    --font-family-mono: ui-monospace, SFMono-Regular, 'SF Mono', Consolas,
-                        'Liberation Mono', Menlo, monospace;
-
+    /* Typography - JetBrains Mono */
+    --font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
     --font-size-xs: 0.75rem;     /* 12px */
     --font-size-sm: 0.875rem;    /* 14px */
     --font-size-base: 1rem;      /* 16px */
     --font-size-lg: 1.125rem;    /* 18px */
     --font-size-xl: 1.25rem;     /* 20px */
     --font-size-2xl: 1.5rem;     /* 24px */
-    --font-size-3xl: 1.875rem;   /* 30px */
+    --font-size-3xl: 2rem;       /* 32px */
     --font-size-4xl: 2.25rem;    /* 36px */
 
     --font-weight-normal: 400;
@@ -139,7 +134,7 @@ html {
 }
 
 body {
-    font-family: var(--font-family-sans);
+    font-family: var(--font-family);
     font-size: var(--font-size-base);
     line-height: var(--line-height-normal);
     color: var(--color-text);
@@ -271,7 +266,7 @@ code,
 kbd,
 pre,
 samp {
-    font-family: var(--font-family-mono);
+    font-family: var(--font-family);
     font-size: 0.875em;
 }
 

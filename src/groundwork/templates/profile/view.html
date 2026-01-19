@@ -1,0 +1,151 @@
+{% extends "layouts/app.html" %}
+
+{% block title %}My Profile{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+    <div class="page-header__content">
+        <h1 class="page-header__title">My Profile</h1>
+        <p class="page-header__description">View and manage your account information</p>
+    </div>
+    <div class="page-header__actions">
+        <a href="/profile/edit" class="btn btn--secondary">Edit Profile</a>
+        <a href="/profile/settings" class="btn btn--ghost">Settings</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="profile-view">
+    <div class="profile-grid">
+        <!-- Avatar Section -->
+        <div class="profile-avatar-section">
+            <div class="card">
+                <div class="card__body" style="text-align: center; padding: var(--spacing-8);">
+                    <div class="avatar avatar--xl" style="width: 6rem; height: 6rem; font-size: 2rem; margin: 0 auto var(--spacing-4);">
+                        {% if user.avatar_path %}
+                            <img src="{{ user.avatar_path }}" alt="{{ user.full_name }}">
+                        {% else %}
+                            {{ user.first_name[0] }}{{ user.last_name[0] }}
+                        {% endif %}
+                    </div>
+                    <h2 class="h4" style="margin-bottom: var(--spacing-1);">{{ user.full_name }}</h2>
+                    <p class="text-secondary text-sm">{{ user.email }}</p>
+                    {% if user.role %}
+                    <span class="badge badge--primary" style="margin-top: var(--spacing-3);">{{ user.role.name }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Details Section -->
+        <div class="profile-details-section">
+            <div class="card">
+                <div class="card__header">
+                    <h3 class="card__title">Account Information</h3>
+                </div>
+                <div class="card__body">
+                    <dl class="details-list">
+                        <div class="details-list__item">
+                            <dt class="details-list__label">Email</dt>
+                            <dd class="details-list__value">{{ user.email }}</dd>
+                        </div>
+                        <div class="details-list__item">
+                            <dt class="details-list__label">First Name</dt>
+                            <dd class="details-list__value">{{ user.first_name }}</dd>
+                        </div>
+                        <div class="details-list__item">
+                            <dt class="details-list__label">Last Name</dt>
+                            <dd class="details-list__value">{{ user.last_name }}</dd>
+                        </div>
+                        {% if user.display_name %}
+                        <div class="details-list__item">
+                            <dt class="details-list__label">Display Name</dt>
+                            <dd class="details-list__value">{{ user.display_name }}</dd>
+                        </div>
+                        {% endif %}
+                        <div class="details-list__item">
+                            <dt class="details-list__label">Role</dt>
+                            <dd class="details-list__value">
+                                <span class="badge badge--primary">{{ user.role.name if user.role else 'N/A' }}</span>
+                            </dd>
+                        </div>
+                        <div class="details-list__item">
+                            <dt class="details-list__label">Member Since</dt>
+                            <dd class="details-list__value">{{ user.created_at.strftime('%B %d, %Y') }}</dd>
+                        </div>
+                        {% if user.last_login_at %}
+                        <div class="details-list__item">
+                            <dt class="details-list__label">Last Login</dt>
+                            <dd class="details-list__value">{{ user.last_login_at.strftime('%B %d, %Y at %H:%M') }}</dd>
+                        </div>
+                        {% endif %}
+                    </dl>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: var(--spacing-4);">
+                <div class="card__header">
+                    <h3 class="card__title">Preferences</h3>
+                </div>
+                <div class="card__body">
+                    <dl class="details-list">
+                        <div class="details-list__item">
+                            <dt class="details-list__label">Timezone</dt>
+                            <dd class="details-list__value">{{ user.timezone }}</dd>
+                        </div>
+                        <div class="details-list__item">
+                            <dt class="details-list__label">Language</dt>
+                            <dd class="details-list__value">{{ user.language }}</dd>
+                        </div>
+                        <div class="details-list__item">
+                            <dt class="details-list__label">Theme</dt>
+                            <dd class="details-list__value">{{ user.theme|capitalize }}</dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.profile-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: var(--spacing-6);
+    max-width: 900px;
+}
+
+@media (max-width: 768px) {
+    .profile-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.details-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-4);
+}
+
+.details-list__item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-1);
+}
+
+.details-list__label {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.details-list__value {
+    font-size: var(--font-size-sm);
+    color: var(--color-text);
+}
+</style>
+{% endblock %}

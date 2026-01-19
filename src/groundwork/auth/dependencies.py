@@ -77,5 +77,16 @@ def require_permission(permission: str) -> Callable[[User], User]:
     return checker
 
 
+async def get_current_user_optional(
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> User | None:
+    """Get current user if logged in, otherwise None."""
+    try:
+        return await get_current_user(request, db)
+    except HTTPException:
+        return None
+
+
 # Type alias for common dependency
 CurrentUser = Annotated[User, Depends(get_current_user)]

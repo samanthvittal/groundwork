@@ -36,6 +36,7 @@ from groundwork.views import (
 from groundwork.views import (
     users_router as users_view_router,
 )
+from groundwork.views.placeholder import router as placeholder_view_router
 
 logger = get_logger(__name__)
 
@@ -132,6 +133,7 @@ def create_app() -> FastAPI:
     app.include_router(profile_view_router, tags=["profile-views"])
     app.include_router(users_view_router, tags=["users-views"])
     app.include_router(roles_view_router, tags=["roles-views"])
+    app.include_router(placeholder_view_router, tags=["placeholder-views"])
 
     # Root redirect - goes to users page (requires auth, so will redirect to login if needed)
     @app.get("/")

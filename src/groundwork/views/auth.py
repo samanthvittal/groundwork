@@ -86,7 +86,7 @@ async def login_submit(
     return response
 
 
-@router.get("/logout")
+@router.post("/logout")
 async def logout(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],

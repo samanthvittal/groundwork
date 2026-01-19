@@ -16,6 +16,12 @@ from groundwork.core.templates import get_templates
 router = APIRouter()
 
 
+@router.get("/preferences")
+async def preferences_redirect() -> RedirectResponse:
+    """Redirect /preferences to /profile."""
+    return RedirectResponse(url="/profile", status_code=303)
+
+
 @router.get("/profile", response_class=HTMLResponse)
 async def profile_view(
     request: Request,

@@ -49,7 +49,13 @@ class SetupCheckMiddleware(BaseHTTPMiddleware):
     """Middleware to redirect to setup wizard if setup is not complete."""
 
     # Paths that should bypass the setup check
-    BYPASS_PREFIXES = ("/setup", "/health", "/api/v1/health", "/static")
+    BYPASS_PREFIXES = (
+        "/setup",
+        "/health",
+        "/api/v1/health",
+        "/api/v1/setup",
+        "/static",
+    )
 
     def __init__(self, app: ASGIApp) -> None:
         """Initialize the middleware.

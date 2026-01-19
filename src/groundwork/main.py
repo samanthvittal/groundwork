@@ -9,7 +9,6 @@ from pathlib import Path
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 
 from groundwork.core.config import get_settings
 from groundwork.core.database import get_engine, get_session_factory
@@ -39,18 +38,9 @@ from groundwork.views import (
 
 logger = get_logger(__name__)
 
-# Path configuration for templates and static files
+# Path configuration for static files
 BASE_DIR = Path(__file__).resolve().parent
-TEMPLATES_DIR = BASE_DIR / "templates"
 STATIC_DIR = BASE_DIR / "static"
-
-# Initialize Jinja2Templates
-templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
-
-
-def get_templates() -> Jinja2Templates:
-    """Get the configured Jinja2Templates instance."""
-    return templates
 
 
 @asynccontextmanager

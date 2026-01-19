@@ -12,8 +12,19 @@ from groundwork.auth.utils import hash_password, verify_password
 # Directory for avatar uploads
 UPLOAD_DIR = "uploads/avatars"
 
+# Maximum avatar file size (5 MB)
+MAX_AVATAR_SIZE = 5 * 1024 * 1024
+
 # Allowed image content types
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
+
+# Magic bytes for validating actual file content (prevents content-type spoofing)
+MAGIC_BYTES = {
+    "image/jpeg": [b"\xff\xd8\xff"],
+    "image/png": [b"\x89PNG\r\n\x1a\n"],
+    "image/gif": [b"GIF87a", b"GIF89a"],
+    "image/webp": [b"RIFF"],  # WebP files start with RIFF
+}
 
 
 class ProfileService:
@@ -68,10 +79,24 @@ class ProfileService:
     ) -> str | None:
         """Upload user avatar.
 
-        Returns the avatar path if successful, None if file type is not allowed.
+        Returns the avatar path if successful, None if:
+        - File type is not allowed
+        - File is too large (>5MB)
+        - File content doesn't match claimed type (content-type spoofing)
         """
-        # Validate content type
+        # Validate content type header
         if file.content_type not in ALLOWED_IMAGE_TYPES:
+            return None
+
+        # Read file content
+        content = await file.read()
+
+        # Check file size (prevents resource exhaustion)
+        if len(content) > MAX_AVATAR_SIZE:
+            return None
+
+        # Validate magic bytes to prevent content-type spoofing
+        if not self._validate_magic_bytes(content, file.content_type):
             return None
 
         # Get file extension from content type
@@ -90,8 +115,7 @@ class ProfileService:
         filename = f"{user.id}{extension}"
         file_path = os.path.join(UPLOAD_DIR, filename)
 
-        # Read and save file (using anyio for async file write)
-        content = await file.read()
+        # Save file (using anyio for async file write)
         await anyio.to_thread.run_sync(self._write_file, file_path, content)
 
         # Update user avatar path
@@ -99,6 +123,18 @@ class ProfileService:
         await self.db.flush()
 
         return file_path
+
+    @staticmethod
+    def _validate_magic_bytes(content: bytes, content_type: str) -> bool:
+        """Validate file content matches the claimed content type.
+
+        Checks magic bytes at the start of the file to prevent content-type spoofing.
+        """
+        expected_signatures = MAGIC_BYTES.get(content_type, [])
+        if not expected_signatures:
+            return False
+
+        return any(content.startswith(signature) for signature in expected_signatures)
 
     @staticmethod
     def _write_file(file_path: str, content: bytes) -> None:

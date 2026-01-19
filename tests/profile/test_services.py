@@ -269,6 +269,86 @@ async def test_upload_avatar_accepts_jpeg(
     assert ".jpg" in result
 
 
+@pytest.mark.asyncio
+async def test_upload_avatar_rejects_file_too_large(
+    mock_db: AsyncMock, mock_user: MagicMock
+) -> None:
+    """upload_avatar should return None for files exceeding size limit."""
+    from groundwork.profile.services import MAX_AVATAR_SIZE, ProfileService
+
+    service = ProfileService(mock_db)
+
+    # Create file larger than MAX_AVATAR_SIZE
+    large_content = b"\x89PNG\r\n\x1a\n" + (b"\x00" * (MAX_AVATAR_SIZE + 1))
+
+    mock_file = MagicMock()
+    mock_file.filename = "large_avatar.png"
+    mock_file.content_type = "image/png"
+    mock_file.read = AsyncMock(return_value=large_content)
+
+    result = await service.upload_avatar(
+        user=mock_user,
+        file=mock_file,
+    )
+
+    assert result is None
+    mock_db.flush.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_upload_avatar_rejects_spoofed_content_type(
+    mock_db: AsyncMock, mock_user: MagicMock
+) -> None:
+    """upload_avatar should return None when magic bytes don't match content type."""
+    from groundwork.profile.services import ProfileService
+
+    service = ProfileService(mock_db)
+
+    # File claims to be PNG but has HTML content (XSS attack attempt)
+    mock_file = MagicMock()
+    mock_file.filename = "fake.png"
+    mock_file.content_type = "image/png"
+    mock_file.read = AsyncMock(
+        return_value=b"<html><script>alert('xss')</script></html>"
+    )
+
+    result = await service.upload_avatar(
+        user=mock_user,
+        file=mock_file,
+    )
+
+    assert result is None
+    mock_db.flush.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_upload_avatar_accepts_gif(
+    mock_db: AsyncMock, mock_user: MagicMock, tmp_path: str
+) -> None:
+    """upload_avatar should accept GIF images with correct magic bytes."""
+    from groundwork.profile.services import ProfileService
+
+    service = ProfileService(mock_db)
+
+    mock_file = MagicMock()
+    mock_file.filename = "avatar.gif"
+    mock_file.content_type = "image/gif"
+    mock_file.read = AsyncMock(return_value=b"GIF89a" + b"\x00" * 100)
+
+    with (
+        patch("groundwork.profile.services.UPLOAD_DIR", str(tmp_path)),
+        patch("os.makedirs"),
+        patch("anyio.to_thread.run_sync", AsyncMock()),
+    ):
+        result = await service.upload_avatar(
+            user=mock_user,
+            file=mock_file,
+        )
+
+    assert result is not None
+    assert ".gif" in result
+
+
 # =============================================================================
 # ProfileService.update_settings
 # =============================================================================

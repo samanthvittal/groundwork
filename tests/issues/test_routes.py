@@ -5,8 +5,7 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from groundwork.auth.models import Permission, Role, User
-from groundwork.auth.services import AuthService
-from groundwork.auth.utils import hash_password
+from groundwork.auth.utils import create_access_token, hash_password
 from groundwork.issues.models import IssueType, Priority, Status, StatusCategory
 from groundwork.issues.services import IssueService
 from groundwork.projects.services import ProjectService
@@ -24,10 +23,9 @@ async def test_role(db_session: AsyncSession) -> Role:
     db_session.add(permission)
 
     role = Role(
-        name="admin",
+        name="Admin",
         description="Administrator role",
         is_system=True,
-        is_admin=True,
         permissions=[permission],
     )
     db_session.add(role)
@@ -52,11 +50,10 @@ async def test_user(db_session: AsyncSession, test_role: Role) -> User:
 
 
 @pytest.fixture
-async def auth_headers(db_session: AsyncSession, test_user: User) -> dict[str, str]:
-    """Create auth headers for test user."""
-    auth_service = AuthService(db_session)
-    tokens = await auth_service.create_tokens(test_user)
-    return {"Authorization": f"Bearer {tokens.access_token}"}
+async def auth_cookies(test_user: User) -> dict[str, str]:
+    """Create auth cookies for test user."""
+    access_token = create_access_token(str(test_user.id))
+    return {"access_token": access_token}
 
 
 @pytest.fixture
@@ -133,14 +130,14 @@ async def test_issue(
 @pytest.mark.asyncio
 async def test_list_issue_types(
     client: AsyncClient,
-    auth_headers: dict[str, str],
+    auth_cookies: dict[str, str],
     test_project,
     test_issue_type: IssueType,
 ) -> None:
     """GET /api/v1/projects/{key}/issue-types should return issue types."""
     response = await client.get(
         f"/api/v1/projects/{test_project.key}/issue-types",
-        headers=auth_headers,
+        cookies=auth_cookies,
     )
 
     assert response.status_code == 200
@@ -152,14 +149,14 @@ async def test_list_issue_types(
 @pytest.mark.asyncio
 async def test_list_statuses(
     client: AsyncClient,
-    auth_headers: dict[str, str],
+    auth_cookies: dict[str, str],
     test_project,
     test_status: Status,
 ) -> None:
     """GET /api/v1/projects/{key}/statuses should return statuses."""
     response = await client.get(
         f"/api/v1/projects/{test_project.key}/statuses",
-        headers=auth_headers,
+        cookies=auth_cookies,
     )
 
     assert response.status_code == 200
@@ -176,7 +173,7 @@ async def test_list_statuses(
 @pytest.mark.asyncio
 async def test_create_issue(
     client: AsyncClient,
-    auth_headers: dict[str, str],
+    auth_cookies: dict[str, str],
     test_project,
     test_issue_type: IssueType,
     test_status: Status,
@@ -184,7 +181,7 @@ async def test_create_issue(
     """POST /api/v1/projects/{key}/issues should create issue."""
     response = await client.post(
         f"/api/v1/projects/{test_project.key}/issues",
-        headers=auth_headers,
+        cookies=auth_cookies,
         json={
             "title": "New Issue",
             "type_id": str(test_issue_type.id),
@@ -204,14 +201,14 @@ async def test_create_issue(
 @pytest.mark.asyncio
 async def test_list_issues(
     client: AsyncClient,
-    auth_headers: dict[str, str],
+    auth_cookies: dict[str, str],
     test_project,
     test_issue,
 ) -> None:
     """GET /api/v1/projects/{key}/issues should return issues."""
     response = await client.get(
         f"/api/v1/projects/{test_project.key}/issues",
-        headers=auth_headers,
+        cookies=auth_cookies,
     )
 
     assert response.status_code == 200
@@ -223,13 +220,13 @@ async def test_list_issues(
 @pytest.mark.asyncio
 async def test_get_issue(
     client: AsyncClient,
-    auth_headers: dict[str, str],
+    auth_cookies: dict[str, str],
     test_issue,
 ) -> None:
     """GET /api/v1/issues/{key} should return issue details."""
     response = await client.get(
         f"/api/v1/issues/{test_issue.key}",
-        headers=auth_headers,
+        cookies=auth_cookies,
     )
 
     assert response.status_code == 200
@@ -241,12 +238,12 @@ async def test_get_issue(
 @pytest.mark.asyncio
 async def test_get_issue_not_found(
     client: AsyncClient,
-    auth_headers: dict[str, str],
+    auth_cookies: dict[str, str],
 ) -> None:
     """GET /api/v1/issues/{key} should return 404 for non-existent issue."""
     response = await client.get(
         "/api/v1/issues/NOTFOUND-999",
-        headers=auth_headers,
+        cookies=auth_cookies,
     )
 
     assert response.status_code == 404
@@ -255,13 +252,13 @@ async def test_get_issue_not_found(
 @pytest.mark.asyncio
 async def test_update_issue(
     client: AsyncClient,
-    auth_headers: dict[str, str],
+    auth_cookies: dict[str, str],
     test_issue,
 ) -> None:
     """PATCH /api/v1/issues/{key} should update issue."""
     response = await client.patch(
         f"/api/v1/issues/{test_issue.key}",
-        headers=auth_headers,
+        cookies=auth_cookies,
         json={
             "title": "Updated Title",
             "priority": "critical",
@@ -277,13 +274,13 @@ async def test_update_issue(
 @pytest.mark.asyncio
 async def test_delete_issue(
     client: AsyncClient,
-    auth_headers: dict[str, str],
+    auth_cookies: dict[str, str],
     test_issue,
 ) -> None:
     """DELETE /api/v1/issues/{key} should soft delete issue."""
     response = await client.delete(
         f"/api/v1/issues/{test_issue.key}",
-        headers=auth_headers,
+        cookies=auth_cookies,
     )
 
     assert response.status_code == 204
@@ -291,7 +288,7 @@ async def test_delete_issue(
     # Verify it's deleted (should return 404 now)
     get_response = await client.get(
         f"/api/v1/issues/{test_issue.key}",
-        headers=auth_headers,
+        cookies=auth_cookies,
     )
     assert get_response.status_code == 404
 
@@ -304,13 +301,13 @@ async def test_delete_issue(
 @pytest.mark.asyncio
 async def test_create_label(
     client: AsyncClient,
-    auth_headers: dict[str, str],
+    auth_cookies: dict[str, str],
     test_project,
 ) -> None:
     """POST /api/v1/projects/{key}/labels should create label."""
     response = await client.post(
         f"/api/v1/projects/{test_project.key}/labels",
-        headers=auth_headers,
+        cookies=auth_cookies,
         json={
             "name": "Bug",
             "color": "#ef4444",
@@ -327,12 +324,11 @@ async def test_create_label(
 @pytest.mark.asyncio
 async def test_list_labels(
     client: AsyncClient,
-    auth_headers: dict[str, str],
+    auth_cookies: dict[str, str],
     test_project,
     db_session: AsyncSession,
 ) -> None:
     """GET /api/v1/projects/{key}/labels should return labels."""
-    # Create a label first
     from groundwork.issues.services import LabelService
 
     label_service = LabelService(db_session)
@@ -340,7 +336,7 @@ async def test_list_labels(
 
     response = await client.get(
         f"/api/v1/projects/{test_project.key}/labels",
-        headers=auth_headers,
+        cookies=auth_cookies,
     )
 
     assert response.status_code == 200
@@ -351,7 +347,7 @@ async def test_list_labels(
 @pytest.mark.asyncio
 async def test_update_label(
     client: AsyncClient,
-    auth_headers: dict[str, str],
+    auth_cookies: dict[str, str],
     test_project,
     db_session: AsyncSession,
 ) -> None:
@@ -363,7 +359,7 @@ async def test_update_label(
 
     response = await client.patch(
         f"/api/v1/labels/{label.id}",
-        headers=auth_headers,
+        cookies=auth_cookies,
         json={"name": "Critical Bug", "color": "#dc2626"},
     )
 
@@ -375,7 +371,7 @@ async def test_update_label(
 @pytest.mark.asyncio
 async def test_delete_label(
     client: AsyncClient,
-    auth_headers: dict[str, str],
+    auth_cookies: dict[str, str],
     test_project,
     db_session: AsyncSession,
 ) -> None:
@@ -387,7 +383,7 @@ async def test_delete_label(
 
     response = await client.delete(
         f"/api/v1/labels/{label.id}",
-        headers=auth_headers,
+        cookies=auth_cookies,
     )
 
     assert response.status_code == 204
@@ -401,7 +397,7 @@ async def test_delete_label(
 @pytest.mark.asyncio
 async def test_list_subtasks(
     client: AsyncClient,
-    auth_headers: dict[str, str],
+    auth_cookies: dict[str, str],
     test_issue,
     test_user: User,
     test_issue_type: IssueType,
@@ -422,7 +418,7 @@ async def test_list_subtasks(
 
     response = await client.get(
         f"/api/v1/issues/{test_issue.key}/subtasks",
-        headers=auth_headers,
+        cookies=auth_cookies,
     )
 
     assert response.status_code == 200
@@ -433,14 +429,14 @@ async def test_list_subtasks(
 @pytest.mark.asyncio
 async def test_create_subtask(
     client: AsyncClient,
-    auth_headers: dict[str, str],
+    auth_cookies: dict[str, str],
     test_issue,
     test_issue_type: IssueType,
 ) -> None:
     """POST /api/v1/issues/{key}/subtasks should create subtask."""
     response = await client.post(
         f"/api/v1/issues/{test_issue.key}/subtasks",
-        headers=auth_headers,
+        cookies=auth_cookies,
         json={
             "title": "New Subtask",
             "type_id": str(test_issue_type.id),
@@ -462,7 +458,7 @@ async def test_create_subtask(
 @pytest.mark.asyncio
 async def test_add_label_to_issue(
     client: AsyncClient,
-    auth_headers: dict[str, str],
+    auth_cookies: dict[str, str],
     test_issue,
     test_project,
     db_session: AsyncSession,
@@ -475,7 +471,7 @@ async def test_add_label_to_issue(
 
     response = await client.post(
         f"/api/v1/issues/{test_issue.key}/labels",
-        headers=auth_headers,
+        cookies=auth_cookies,
         json={"label_id": str(label.id)},
     )
 
@@ -487,7 +483,7 @@ async def test_add_label_to_issue(
 @pytest.mark.asyncio
 async def test_remove_label_from_issue(
     client: AsyncClient,
-    auth_headers: dict[str, str],
+    auth_cookies: dict[str, str],
     test_issue,
     test_project,
     db_session: AsyncSession,
@@ -503,7 +499,7 @@ async def test_remove_label_from_issue(
 
     response = await client.delete(
         f"/api/v1/issues/{test_issue.key}/labels/{label.id}",
-        headers=auth_headers,
+        cookies=auth_cookies,
     )
 
     assert response.status_code == 204

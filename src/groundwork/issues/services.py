@@ -81,6 +81,12 @@ class IssueService:
         self.db.add(issue)
         await self.db.flush()
 
+        # Expire parent's subtasks cache so subsequent loads reflect the new child
+        if parent_id is not None:
+            parent = await self.db.get(Issue, parent_id)
+            if parent is not None:
+                self.db.expire(parent, ["subtasks"])
+
         # Reload with relationships
         return await self.get_issue(issue.id)
 
@@ -394,6 +400,8 @@ class IssueService:
         self.db.add(issue_label)
         await self.db.flush()
 
+        # Expire cached labels so the next load picks up the new association
+        self.db.expire(issue, ["labels"])
         return await self.get_issue(issue_id)
 
     async def remove_label(self, issue_id: UUID, label_id: UUID) -> Issue | None:
@@ -416,6 +424,8 @@ class IssueService:
         if issue_label is not None:
             await self.db.delete(issue_label)
             await self.db.flush()
+            # Expire cached labels so the next load reflects the removal
+            self.db.expire(issue, ["labels"])
 
         return await self.get_issue(issue_id)
 

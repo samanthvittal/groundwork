@@ -6,6 +6,7 @@ from collections.abc import AsyncGenerator
 import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
@@ -27,6 +28,8 @@ from groundwork.issues import models as issues_models  # noqa: F401
 from groundwork.main import create_app
 from groundwork.projects import models as projects_models  # noqa: F401
 from groundwork.setup import models as setup_models  # noqa: F401
+from groundwork.setup.middleware import set_session_factory_override
+from groundwork.setup.models import InstanceConfig
 
 # Clear settings cache to use test settings
 get_settings.cache_clear()
@@ -40,25 +43,17 @@ def anyio_backend() -> str:
 
 
 @pytest.fixture
-async def db_session() -> AsyncGenerator[AsyncSession, None]:
-    """Create tables and provide a session that rolls back after each test."""
-    # Create engine and session factory per test to avoid event loop issues
+async def db_engine() -> AsyncGenerator[AsyncEngine, None]:
+    """Create a test database engine with tables."""
     engine = create_async_engine(
         str(settings.database_url),
         echo=False,
-    )
-    session_factory = async_sessionmaker(
-        engine,
-        class_=AsyncSession,
-        expire_on_commit=False,
     )
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    async with session_factory() as session:
-        yield session
-        await session.rollback()
+    yield engine
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
@@ -67,9 +62,45 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
 
 
 @pytest.fixture
-async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
+async def db_session(db_engine: AsyncEngine) -> AsyncGenerator[AsyncSession, None]:
+    """Provide a session that rolls back after each test."""
+    session_factory = async_sessionmaker(
+        db_engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+    )
+
+    async with session_factory() as session:
+        yield session
+        await session.rollback()
+
+
+@pytest.fixture
+async def client(
+    db_session: AsyncSession, db_engine: AsyncEngine
+) -> AsyncGenerator[AsyncClient, None]:
     """Test client with overridden database dependency."""
     app = create_app()
+
+    # Create a session factory from the test engine for middleware
+    test_session_factory = async_sessionmaker(
+        db_engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+    )
+
+    # Insert InstanceConfig so setup middleware doesn't redirect
+    async with test_session_factory() as setup_session:
+        config = InstanceConfig(
+            instance_name="Test Instance",
+            base_url="http://test",
+            setup_completed=True,
+        )
+        setup_session.add(config)
+        await setup_session.commit()
+
+    # Override the middleware's session factory so it reads from the test DB
+    set_session_factory_override(test_session_factory)
 
     async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
         yield db_session
@@ -80,3 +111,6 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
         transport=ASGITransport(app=app), base_url="http://test"
     ) as ac:
         yield ac
+
+    # Clean up the override
+    set_session_factory_override(None)

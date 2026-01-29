@@ -19,12 +19,14 @@
         {% endif %}
     </div>
     <div class="page-header__actions">
-        <a href="/projects/{{ project.key }}/issues" class="btn btn--secondary">
-            <svg class="btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        {% if can_create_issue %}
+        <a href="/projects/{{ project.key }}/issues/create" class="btn btn--secondary">
+            <svg class="btn__icon" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
             </svg>
-            Issues
+            New Issue
         </a>
+        {% endif %}
         {% if can_admin %}
         <a href="/projects/{{ project.id }}/members" class="btn btn--secondary">
             <svg class="btn__icon" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
@@ -32,7 +34,7 @@
             </svg>
             Members
         </a>
-        <a href="/projects/{{ project.id }}/edit" class="btn btn--primary">
+        <a href="/projects/{{ project.id }}/edit" class="btn btn--secondary">
             <svg class="btn__icon" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
                 <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
             </svg>
@@ -107,23 +109,100 @@
                 </div>
             </div>
 
+            <!-- Issues (inline) -->
             <div class="card" style="margin-top: var(--spacing-4);">
                 <div class="card__header">
-                    <h2 class="card__title">Issues</h2>
+                    <h2 class="card__title">Issues{% if issues_pagination %} ({{ issues_pagination.total }}){% endif %}</h2>
+                    {% if can_create_issue %}
                     <a href="/projects/{{ project.key }}/issues/create" class="btn btn--primary btn--sm">
                         <svg class="btn__icon" viewBox="0 0 20 20" fill="currentColor" width="14" height="14">
                             <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
                         </svg>
                         New Issue
                     </a>
+                    {% endif %}
                 </div>
-                <div class="card__body">
-                    <a href="/projects/{{ project.key }}/issues" class="btn btn--secondary" style="width: 100%; justify-content: center;">
-                        <svg class="btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        View All Issues
-                    </a>
+                <div class="card__body card__body--no-padding">
+                    {% if issues %}
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th style="width: 100px;">Key</th>
+                                <th>Title</th>
+                                <th style="width: 90px;">Type</th>
+                                <th style="width: 110px;">Status</th>
+                                <th style="width: 90px;">Priority</th>
+                                <th style="width: 140px;">Assignee</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for issue in issues %}
+                            <tr class="table__row--clickable" onclick="window.location='/issues/{{ issue.key }}'">
+                                <td>
+                                    <a href="/issues/{{ issue.key }}" class="issue-key">{{ issue.key }}</a>
+                                </td>
+                                <td class="issue-title-cell">{{ issue.title }}</td>
+                                <td>
+                                    <span class="issue-type-badge" style="background-color: {{ issue.type.color }}20; color: {{ issue.type.color }};">
+                                        {{ issue.type.name }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="status-badge status-badge--{{ issue.status.category.value }}">
+                                        {{ issue.status.name }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="priority-badge priority-badge--{{ issue.priority.value }}">
+                                        {{ issue.priority.value|capitalize }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if issue.assignee %}
+                                    <div class="user-cell">
+                                        <div class="avatar avatar--xs">
+                                            {% if issue.assignee.avatar_path %}
+                                            <img src="{{ issue.assignee.avatar_path }}" alt="{{ issue.assignee.full_name }}">
+                                            {% else %}
+                                            {{ issue.assignee.first_name[0] }}{{ issue.assignee.last_name[0] }}
+                                            {% endif %}
+                                        </div>
+                                        <span>{{ issue.assignee.full_name }}</span>
+                                    </div>
+                                    {% else %}
+                                    <span class="text-muted">Unassigned</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    {% if issues_pagination %}
+                    <div class="card__footer">
+                        <div class="pagination">
+                            <span class="pagination__info">
+                                Showing {{ issues_pagination.start }} - {{ issues_pagination.end }} of {{ issues_pagination.total }}
+                            </span>
+                            <div class="pagination__controls">
+                                {% if issues_pagination.has_prev %}
+                                <a href="?page={{ issues_pagination.page - 1 }}" class="btn btn--ghost btn--sm">Previous</a>
+                                {% endif %}
+                                {% if issues_pagination.has_next %}
+                                <a href="?page={{ issues_pagination.page + 1 }}" class="btn btn--ghost btn--sm">Next</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <div class="empty-state-small">
+                        <p>No issues yet.</p>
+                        {% if can_create_issue %}
+                        <a href="/projects/{{ project.key }}/issues/create" class="text-link">Create your first issue</a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -244,6 +323,107 @@
     color: var(--color-text);
 }
 
+/* Issue table styles */
+.issue-key {
+    font-family: var(--font-mono);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-primary);
+    text-decoration: none;
+}
+
+.issue-key:hover {
+    text-decoration: underline;
+}
+
+.issue-title-cell {
+    max-width: 300px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.issue-type-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+}
+
+.status-badge--todo {
+    background-color: var(--color-secondary-light, #f3f4f6);
+    color: var(--color-text-secondary);
+}
+
+.status-badge--in_progress {
+    background-color: #dbeafe;
+    color: #2563eb;
+}
+
+.status-badge--done {
+    background-color: #dcfce7;
+    color: #16a34a;
+}
+
+.priority-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+}
+
+.priority-badge--critical { background-color: #fee2e2; color: #dc2626; }
+.priority-badge--high { background-color: #ffedd5; color: #ea580c; }
+.priority-badge--medium { background-color: #fef3c7; color: #d97706; }
+.priority-badge--low { background-color: #dbeafe; color: #2563eb; }
+.priority-badge--none { background-color: #f3f4f6; color: #6b7280; }
+
+.user-cell {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+}
+
+.text-muted {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+}
+
+.table__row--clickable {
+    cursor: pointer;
+}
+
+.table__row--clickable:hover {
+    background-color: var(--color-bg-hover, #f9fafb);
+}
+
+.pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-3) var(--spacing-4);
+}
+
+.pagination__info {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+.pagination__controls {
+    display: flex;
+    gap: var(--spacing-2);
+}
+
+/* Sidebar */
 .member-list {
     list-style: none;
     margin: 0;

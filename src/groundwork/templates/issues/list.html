@@ -47,17 +47,15 @@
 
     <!-- Filters -->
     <div class="card" style="margin-bottom: var(--spacing-4);">
-        <div class="card__body">
+        <div class="card__header">
             <form method="get" class="filters-form">
                 <div class="filters-row">
                     <div class="filter-group">
-                        <label class="filter-label">Search</label>
                         <input type="text" name="q" value="{{ filters.q or '' }}"
-                               placeholder="Search issues..." class="input input--sm">
+                               placeholder="Search issues..." class="form-input form-input--sm">
                     </div>
                     <div class="filter-group">
-                        <label class="filter-label">Status</label>
-                        <select name="status" class="input input--sm">
+                        <select name="status" class="form-select form-select--sm">
                             <option value="">All Statuses</option>
                             {% for s in statuses %}
                             <option value="{{ s.id }}" {% if filters.status == s.id|string %}selected{% endif %}>{{ s.name }}</option>
@@ -65,8 +63,7 @@
                         </select>
                     </div>
                     <div class="filter-group">
-                        <label class="filter-label">Type</label>
-                        <select name="type" class="input input--sm">
+                        <select name="type" class="form-select form-select--sm">
                             <option value="">All Types</option>
                             {% for t in issue_types %}
                             <option value="{{ t.id }}" {% if filters.type == t.id|string %}selected{% endif %}>{{ t.name }}</option>
@@ -74,8 +71,7 @@
                         </select>
                     </div>
                     <div class="filter-group">
-                        <label class="filter-label">Priority</label>
-                        <select name="priority" class="input input--sm">
+                        <select name="priority" class="form-select form-select--sm">
                             <option value="">All Priorities</option>
                             {% for p in priorities %}
                             <option value="{{ p.value }}" {% if filters.priority == p.value %}selected{% endif %}>{{ p.value|capitalize }}</option>
@@ -83,9 +79,8 @@
                         </select>
                     </div>
                     <div class="filter-group">
-                        <label class="filter-label">Assignee</label>
-                        <select name="assignee" class="input input--sm">
-                            <option value="">All</option>
+                        <select name="assignee" class="form-select form-select--sm">
+                            <option value="">All Assignees</option>
                             <option value="me" {% if filters.assignee == 'me' %}selected{% endif %}>Assigned to me</option>
                             <option value="unassigned" {% if filters.assignee == 'unassigned' %}selected{% endif %}>Unassigned</option>
                         </select>
@@ -218,12 +213,6 @@
     flex-direction: row;
     gap: var(--spacing-2);
     margin-left: auto;
-}
-
-.filter-label {
-    font-size: var(--font-size-xs);
-    font-weight: var(--font-weight-medium);
-    color: var(--color-text-secondary);
 }
 
 .issue-key {

@@ -20,6 +20,7 @@ from groundwork.projects.models import (
     ProjectStatus,
     ProjectVisibility,
 )
+from groundwork.issues.services import IssueService, IssueTypeService, StatusService
 from groundwork.projects.services import ProjectService
 
 router = APIRouter()
@@ -241,10 +242,11 @@ async def projects_detail(
     project_id: str,
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: CurrentUser,
+    page: Annotated[int, Query(ge=1)] = 1,
     success: Annotated[str | None, Query()] = None,
     error: Annotated[str | None, Query()] = None,
 ) -> Response:
-    """Show project detail page."""
+    """Show project detail page with inline issues."""
     templates = get_templates()
     service = ProjectService(db)
 
@@ -285,6 +287,37 @@ async def projects_detail(
     # Get members with user details
     members = await service.list_project_members(project_uuid)
 
+    # Get issues for inline display
+    issue_service = IssueService(db)
+    per_page = 20
+    issues = await issue_service.list_issues(
+        project_id=project_uuid,
+        parent_id=None,
+        skip=(page - 1) * per_page,
+        limit=per_page,
+    )
+    total_issues = await issue_service.count_issues(project_uuid)
+
+    # Can create issues (any project member)
+    can_create_issue = current_user.is_admin
+    if not can_create_issue:
+        member = await service.get_member(project_uuid, current_user.id)
+        can_create_issue = member is not None
+
+    # Build pagination
+    issues_pagination = None
+    if total_issues > 0:
+        start = (page - 1) * per_page + 1
+        end = min(page * per_page, total_issues)
+        issues_pagination = {
+            "page": page,
+            "total": total_issues,
+            "start": start,
+            "end": end,
+            "has_prev": page > 1,
+            "has_next": end < total_issues,
+        }
+
     return templates.TemplateResponse(
         request=request,
         name="projects/detail.html",
@@ -292,8 +325,11 @@ async def projects_detail(
             "current_user": current_user,
             "project": project,
             "members": members,
+            "issues": issues,
+            "issues_pagination": issues_pagination,
             "can_edit": can_edit,
             "can_admin": can_admin,
+            "can_create_issue": can_create_issue,
             "is_owner": is_owner,
             "success": success,
             "error": error,

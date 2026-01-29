@@ -471,22 +471,26 @@ class IssueService:
     async def _generate_issue_key(self, project_id: UUID) -> tuple[str, int]:
         """Generate next issue key for project with locking.
 
+        Uses row-level locking on the project to serialize key generation.
+
         Returns:
             Tuple of (key, issue_number)
         """
-        # Use SELECT FOR UPDATE to prevent race conditions
+        # Lock the project row to serialize concurrent issue creation
+        result = await self.db.execute(
+            select(Project).where(Project.id == project_id).with_for_update()
+        )
+        project = result.scalar_one()
+
+        # Now safely get the max issue number
         result = await self.db.execute(
             select(func.coalesce(func.max(Issue.issue_number), 0))
             .where(Issue.project_id == project_id)
-            .with_for_update()
         )
         max_number = result.scalar() or 0
         next_number = max_number + 1
 
-        # Get project key
-        project = await self.db.get(Project, project_id)
         key = f"{project.key}-{next_number}"
-
         return key, next_number
 
     async def _get_default_status_id(self, project_id: UUID) -> UUID:

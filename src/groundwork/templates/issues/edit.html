@@ -5,98 +5,121 @@
 {% block page_header %}
 <div class="page-header">
     <div class="page-header__content">
-        <nav class="breadcrumb">
-            <a href="/projects" class="breadcrumb__link">Projects</a>
-            <span class="breadcrumb__separator">/</span>
-            <a href="/projects/{{ issue.project.id }}" class="breadcrumb__link">{{ issue.project.key }}</a>
-            <span class="breadcrumb__separator">/</span>
-            <a href="/projects/{{ issue.project.key }}/issues" class="breadcrumb__link">Issues</a>
-            <span class="breadcrumb__separator">/</span>
-            <a href="/issues/{{ issue.key }}" class="breadcrumb__link">{{ issue.key }}</a>
-            <span class="breadcrumb__separator">/</span>
-            <span class="breadcrumb__current">Edit</span>
+        <nav class="breadcrumbs">
+            <a href="/projects" class="breadcrumbs__link">Projects</a>
+            <span class="breadcrumbs__separator">/</span>
+            <a href="/projects/{{ issue.project.id }}" class="breadcrumbs__link">{{ issue.project.key }}</a>
+            <span class="breadcrumbs__separator">/</span>
+            <a href="/projects/{{ issue.project.key }}/issues" class="breadcrumbs__link">Issues</a>
+            <span class="breadcrumbs__separator">/</span>
+            <a href="/issues/{{ issue.key }}" class="breadcrumbs__link">{{ issue.key }}</a>
+            <span class="breadcrumbs__separator">/</span>
+            <span class="breadcrumbs__current">Edit</span>
         </nav>
         <h1 class="page-header__title">Edit Issue</h1>
+        <p class="page-header__description">Update {{ issue.key }} - {{ issue.title }}</p>
     </div>
 </div>
 {% endblock %}
 
 {% block content %}
-<div class="edit-issue">
-    <div class="card">
+<div class="issue-edit">
+    <div class="card" style="max-width: 600px;">
+        <div class="card__header">
+            <h2 class="card__title">Issue Details</h2>
+        </div>
         <div class="card__body">
             <form method="post" class="form">
-                <div class="form-group">
-                    <label class="form-label" for="title">Title <span class="required">*</span></label>
-                    <input type="text" id="title" name="title" class="input {% if errors.title %}input--error{% endif %}"
-                           value="{{ title if title is defined else issue.title }}" placeholder="Issue title" required maxlength="500">
+                <!-- Title -->
+                <div class="form-group{% if errors.title %} form-group--error{% endif %}">
+                    <label class="form-label form-label--required" for="title">Title</label>
+                    <input
+                        type="text"
+                        id="title"
+                        name="title"
+                        class="form-input"
+                        value="{{ title if title is defined else issue.title }}"
+                        placeholder="Brief summary of the issue"
+                        required
+                        maxlength="500"
+                    >
                     {% if errors.title %}
                     <span class="form-error">{{ errors.title }}</span>
                     {% endif %}
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label" for="type_id">Type <span class="required">*</span></label>
-                        <select id="type_id" name="type_id" class="input {% if errors.type_id %}input--error{% endif %}" required>
-                            {% for t in issue_types %}
-                            <option value="{{ t.id }}" {% if issue.type_id == t.id %}selected{% endif %}>
-                                {{ t.name }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                        {% if errors.type_id %}
-                        <span class="form-error">{{ errors.type_id }}</span>
-                        {% endif %}
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="status_id">Status <span class="required">*</span></label>
-                        <select id="status_id" name="status_id" class="input {% if errors.status_id %}input--error{% endif %}" required>
-                            {% for s in statuses %}
-                            <option value="{{ s.id }}" {% if issue.status_id == s.id %}selected{% endif %}>
-                                {{ s.name }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                        {% if errors.status_id %}
-                        <span class="form-error">{{ errors.status_id }}</span>
-                        {% endif %}
-                    </div>
+                <!-- Type -->
+                <div class="form-group{% if errors.type_id %} form-group--error{% endif %}">
+                    <label class="form-label form-label--required" for="type_id">Type</label>
+                    <select id="type_id" name="type_id" class="form-select" required>
+                        {% for t in issue_types %}
+                        <option value="{{ t.id }}" {% if issue.type_id == t.id %}selected{% endif %}>
+                            {{ t.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% if errors.type_id %}
+                    <span class="form-error">{{ errors.type_id }}</span>
+                    {% else %}
+                    <span class="form-hint">Categorizes the kind of work</span>
+                    {% endif %}
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label" for="priority">Priority <span class="required">*</span></label>
-                        <select id="priority" name="priority" class="input" required>
-                            {% for p in priorities %}
-                            <option value="{{ p.value }}" {% if issue.priority == p %}selected{% endif %}>
-                                {{ p.value|capitalize }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="assignee_id">Assignee</label>
-                        <select id="assignee_id" name="assignee_id" class="input">
-                            <option value="">Unassigned</option>
-                            {% for member in members %}
-                            <option value="{{ member.user.id }}" {% if issue.assignee_id == member.user.id %}selected{% endif %}>
-                                {{ member.user.full_name }} ({{ member.user.email }})
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
+                <!-- Status -->
+                <div class="form-group{% if errors.status_id %} form-group--error{% endif %}">
+                    <label class="form-label form-label--required" for="status_id">Status</label>
+                    <select id="status_id" name="status_id" class="form-select" required>
+                        {% for s in statuses %}
+                        <option value="{{ s.id }}" {% if issue.status_id == s.id %}selected{% endif %}>
+                            {{ s.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% if errors.status_id %}
+                    <span class="form-error">{{ errors.status_id }}</span>
+                    {% endif %}
                 </div>
 
+                <!-- Priority -->
+                <div class="form-group">
+                    <label class="form-label form-label--required" for="priority">Priority</label>
+                    <select id="priority" name="priority" class="form-select" required>
+                        {% for p in priorities %}
+                        <option value="{{ p.value }}" {% if issue.priority == p %}selected{% endif %}>
+                            {{ p.value|capitalize }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <span class="form-hint">How urgently this needs attention</span>
+                </div>
+
+                <!-- Assignee -->
+                <div class="form-group">
+                    <label class="form-label" for="assignee_id">Assignee</label>
+                    <select id="assignee_id" name="assignee_id" class="form-select">
+                        <option value="">Unassigned</option>
+                        {% for member in members %}
+                        <option value="{{ member.user.id }}" {% if issue.assignee_id == member.user.id %}selected{% endif %}>
+                            {{ member.user.full_name }} ({{ member.user.email }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <span class="form-hint">Who is responsible for this issue</span>
+                </div>
+
+                <!-- Description -->
                 <div class="form-group">
                     <label class="form-label" for="description">Description</label>
-                    <textarea id="description" name="description" class="input textarea" rows="8"
-                              placeholder="Add a description...">{{ description if description is defined else (issue.description or '') }}</textarea>
+                    <textarea
+                        id="description"
+                        name="description"
+                        class="form-input form-textarea"
+                        rows="6"
+                        placeholder="Add more details about the issue..."
+                    >{{ description if description is defined else (issue.description or '') }}</textarea>
                 </div>
 
-                <div class="form-actions">
+                <div class="form-actions form-actions--between" style="margin-top: var(--spacing-6);">
                     <a href="/issues/{{ issue.key }}" class="btn btn--secondary">Cancel</a>
                     <button type="submit" class="btn btn--primary">Save Changes</button>
                 </div>
@@ -106,62 +129,12 @@
 </div>
 
 <style>
-.edit-issue {
-    max-width: 800px;
-}
-
-.form {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-4);
-}
-
-.form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--spacing-4);
-}
-
-@media (max-width: 600px) {
-    .form-row {
-        grid-template-columns: 1fr;
-    }
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-1);
-}
-
-.form-label {
-    font-weight: var(--font-weight-medium);
-    font-size: var(--font-size-sm);
-}
-
-.required {
-    color: var(--color-error);
-}
-
-.form-error {
-    color: var(--color-error);
-    font-size: var(--font-size-xs);
-}
-
-.textarea {
+.form-textarea {
     resize: vertical;
     min-height: 120px;
 }
 
-.form-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--spacing-3);
-    padding-top: var(--spacing-4);
-    border-top: 1px solid var(--color-border);
-}
-
-.breadcrumb {
+.breadcrumbs {
     display: flex;
     align-items: center;
     gap: var(--spacing-2);
@@ -169,20 +142,20 @@
     margin-bottom: var(--spacing-2);
 }
 
-.breadcrumb__link {
+.breadcrumbs__link {
     color: var(--color-text-secondary);
     text-decoration: none;
 }
 
-.breadcrumb__link:hover {
+.breadcrumbs__link:hover {
     color: var(--color-primary);
 }
 
-.breadcrumb__separator {
+.breadcrumbs__separator {
     color: var(--color-text-muted);
 }
 
-.breadcrumb__current {
+.breadcrumbs__current {
     color: var(--color-text);
 }
 </style>

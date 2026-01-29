@@ -16,6 +16,7 @@ from groundwork.core.database import get_engine, get_session_factory
 from groundwork.core.logging import get_logger, setup_logging
 from groundwork.core.seed import seed_defaults
 from groundwork.health.routes import router as health_router
+from groundwork.issues.routes import router as issues_router
 from groundwork.profile.routes import router as profile_router
 from groundwork.projects.routes import router as projects_router
 from groundwork.roles.routes import router as roles_router
@@ -129,6 +130,7 @@ def create_app() -> FastAPI:
     app.include_router(setup_router, prefix="/api/v1/setup", tags=["setup"])
     app.include_router(profile_router, prefix="/api/v1/profile", tags=["profile"])
     app.include_router(projects_router, prefix="/api/v1/projects", tags=["projects"])
+    app.include_router(issues_router, prefix="/api/v1", tags=["issues"])
     app.include_router(roles_router, prefix="/api/v1/roles", tags=["roles"])
     app.include_router(users_router, prefix="/api/v1/users", tags=["users"])
 

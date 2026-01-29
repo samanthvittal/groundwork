@@ -1,0 +1,461 @@
+{% extends "layouts/app.html" %}
+
+{% block title %}{{ issue.key }} - {{ issue.title }}{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+    <div class="page-header__content">
+        <nav class="breadcrumb">
+            <a href="/projects" class="breadcrumb__link">Projects</a>
+            <span class="breadcrumb__separator">/</span>
+            <a href="/projects/{{ issue.project.id }}" class="breadcrumb__link">{{ issue.project.key }}</a>
+            <span class="breadcrumb__separator">/</span>
+            <a href="/projects/{{ issue.project.key }}/issues" class="breadcrumb__link">Issues</a>
+            <span class="breadcrumb__separator">/</span>
+            <span class="breadcrumb__current">{{ issue.key }}</span>
+        </nav>
+        <div class="issue-header">
+            <span class="issue-type-badge-lg" style="background-color: {{ issue.type.color }};">
+                {{ issue.type.name }}
+            </span>
+            <h1 class="page-header__title">
+                <span class="issue-key-badge">{{ issue.key }}</span>
+                {{ issue.title }}
+            </h1>
+        </div>
+    </div>
+    <div class="page-header__actions">
+        {% if can_edit %}
+        <a href="/issues/{{ issue.key }}/edit" class="btn btn--primary">
+            <svg class="btn__icon" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+            </svg>
+            Edit
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="issue-detail">
+    {% if success %}
+    <div class="alert alert--success" style="margin-bottom: var(--spacing-4);">
+        <div class="alert__content">
+            <p class="alert__message">{{ success }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if error %}
+    <div class="alert alert--error" style="margin-bottom: var(--spacing-4);">
+        <div class="alert__content">
+            <p class="alert__message">{{ error }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="issue-detail__grid">
+        <div class="issue-detail__main">
+            <!-- Description -->
+            <div class="card">
+                <div class="card__header">
+                    <h2 class="card__title">Description</h2>
+                </div>
+                <div class="card__body">
+                    {% if issue.description %}
+                    <div class="issue-description">
+                        {{ issue.description }}
+                    </div>
+                    {% else %}
+                    <p class="text-secondary">No description provided.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Subtasks -->
+            <div class="card" style="margin-top: var(--spacing-4);">
+                <div class="card__header">
+                    <h2 class="card__title">Subtasks ({{ subtasks|length }})</h2>
+                    {% if can_edit %}
+                    <a href="/projects/{{ issue.project.key }}/issues/create?parent={{ issue.key }}" class="btn btn--ghost btn--sm">
+                        <svg class="btn__icon" viewBox="0 0 20 20" fill="currentColor" width="14" height="14">
+                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                        </svg>
+                        Add Subtask
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="card__body card__body--no-padding">
+                    {% if subtasks %}
+                    <table class="data-table">
+                        <tbody>
+                            {% for subtask in subtasks %}
+                            <tr class="data-table__row data-table__row--clickable" onclick="window.location='/issues/{{ subtask.key }}'">
+                                <td style="width: 100px;">
+                                    <a href="/issues/{{ subtask.key }}" class="issue-key">{{ subtask.key }}</a>
+                                </td>
+                                <td>{{ subtask.title }}</td>
+                                <td style="width: 120px;">
+                                    <span class="status-badge status-badge--{{ subtask.status.category.value }}">
+                                        {{ subtask.status.name }}
+                                    </span>
+                                </td>
+                                <td style="width: 100px;">
+                                    {% if subtask.assignee %}
+                                    <div class="avatar avatar--xs" title="{{ subtask.assignee.full_name }}">
+                                        {% if subtask.assignee.avatar_path %}
+                                        <img src="{{ subtask.assignee.avatar_path }}" alt="{{ subtask.assignee.full_name }}">
+                                        {% else %}
+                                        {{ subtask.assignee.first_name[0] }}{{ subtask.assignee.last_name[0] }}
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="empty-state-small">
+                        <p>No subtasks yet</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Activity/Comments placeholder -->
+            <div class="card" style="margin-top: var(--spacing-4);">
+                <div class="card__header">
+                    <h2 class="card__title">Activity</h2>
+                </div>
+                <div class="card__body">
+                    <p class="text-secondary">Activity feed coming soon.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="issue-detail__sidebar">
+            <!-- Status & Details -->
+            <div class="card">
+                <div class="card__header">
+                    <h2 class="card__title">Details</h2>
+                </div>
+                <div class="card__body">
+                    <dl class="detail-list">
+                        <div class="detail-list__item">
+                            <dt>Status</dt>
+                            <dd>
+                                <span class="status-badge status-badge--{{ issue.status.category.value }}">
+                                    {{ issue.status.name }}
+                                </span>
+                            </dd>
+                        </div>
+                        <div class="detail-list__item">
+                            <dt>Priority</dt>
+                            <dd>
+                                <span class="priority-badge priority-badge--{{ issue.priority.value }}">
+                                    {{ issue.priority.value|capitalize }}
+                                </span>
+                            </dd>
+                        </div>
+                        <div class="detail-list__item">
+                            <dt>Assignee</dt>
+                            <dd>
+                                {% if issue.assignee %}
+                                <div class="user-inline">
+                                    <div class="avatar avatar--sm">
+                                        {% if issue.assignee.avatar_path %}
+                                        <img src="{{ issue.assignee.avatar_path }}" alt="{{ issue.assignee.full_name }}">
+                                        {% else %}
+                                        {{ issue.assignee.first_name[0] }}{{ issue.assignee.last_name[0] }}
+                                        {% endif %}
+                                    </div>
+                                    <span>{{ issue.assignee.full_name }}</span>
+                                </div>
+                                {% else %}
+                                <span class="text-muted">Unassigned</span>
+                                {% endif %}
+                            </dd>
+                        </div>
+                        <div class="detail-list__item">
+                            <dt>Reporter</dt>
+                            <dd>
+                                <div class="user-inline">
+                                    <div class="avatar avatar--sm">
+                                        {% if issue.reporter.avatar_path %}
+                                        <img src="{{ issue.reporter.avatar_path }}" alt="{{ issue.reporter.full_name }}">
+                                        {% else %}
+                                        {{ issue.reporter.first_name[0] }}{{ issue.reporter.last_name[0] }}
+                                        {% endif %}
+                                    </div>
+                                    <span>{{ issue.reporter.full_name }}</span>
+                                </div>
+                            </dd>
+                        </div>
+                        {% if issue.parent %}
+                        <div class="detail-list__item">
+                            <dt>Parent</dt>
+                            <dd>
+                                <a href="/issues/{{ issue.parent.key }}" class="issue-key">{{ issue.parent.key }}</a>
+                            </dd>
+                        </div>
+                        {% endif %}
+                        <div class="detail-list__item">
+                            <dt>Created</dt>
+                            <dd>{{ issue.created_at.strftime('%Y-%m-%d %H:%M') }}</dd>
+                        </div>
+                        <div class="detail-list__item">
+                            <dt>Updated</dt>
+                            <dd>{{ issue.updated_at.strftime('%Y-%m-%d %H:%M') }}</dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Labels -->
+            <div class="card" style="margin-top: var(--spacing-4);">
+                <div class="card__header">
+                    <h2 class="card__title">Labels</h2>
+                </div>
+                <div class="card__body">
+                    {% if issue.labels %}
+                    <div class="label-list">
+                        {% for label in issue.labels %}
+                        <span class="label-badge" style="background-color: {{ label.color }}20; color: {{ label.color }}; border-color: {{ label.color }};">
+                            {{ label.name }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No labels</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if can_delete %}
+            <div class="card" style="margin-top: var(--spacing-4);">
+                <div class="card__header">
+                    <h2 class="card__title">Danger Zone</h2>
+                </div>
+                <div class="card__body">
+                    <p class="text-secondary" style="margin-bottom: var(--spacing-3);">
+                        Deleting this issue will mark it as deleted.
+                    </p>
+                    <form method="post" action="/issues/{{ issue.key }}/delete" onsubmit="return confirm('Are you sure you want to delete this issue?');">
+                        <button type="submit" class="btn btn--error btn--sm">Delete Issue</button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.issue-detail__grid {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: var(--spacing-4);
+}
+
+@media (max-width: 900px) {
+    .issue-detail__grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.issue-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+    flex-wrap: wrap;
+}
+
+.issue-type-badge-lg {
+    display: inline-block;
+    padding: var(--spacing-1) var(--spacing-3);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: white;
+}
+
+.issue-key-badge {
+    font-family: var(--font-mono);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+    margin-right: var(--spacing-2);
+}
+
+.issue-description {
+    white-space: pre-wrap;
+    line-height: 1.6;
+}
+
+.issue-key {
+    font-family: var(--font-mono);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-primary);
+    text-decoration: none;
+}
+
+.issue-key:hover {
+    text-decoration: underline;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: var(--spacing-1) var(--spacing-2);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+}
+
+.status-badge--todo {
+    background-color: var(--color-secondary-light);
+    color: var(--color-text-secondary);
+}
+
+.status-badge--in_progress {
+    background-color: var(--color-info-light);
+    color: var(--color-info);
+}
+
+.status-badge--done {
+    background-color: var(--color-success-light);
+    color: var(--color-success);
+}
+
+.priority-badge {
+    display: inline-block;
+    padding: var(--spacing-1) var(--spacing-2);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+}
+
+.priority-badge--critical {
+    background-color: #fee2e2;
+    color: #dc2626;
+}
+
+.priority-badge--high {
+    background-color: #ffedd5;
+    color: #ea580c;
+}
+
+.priority-badge--medium {
+    background-color: #fef3c7;
+    color: #d97706;
+}
+
+.priority-badge--low {
+    background-color: #dbeafe;
+    color: #2563eb;
+}
+
+.priority-badge--none {
+    background-color: var(--color-secondary-light);
+    color: var(--color-text-secondary);
+}
+
+.detail-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-3);
+}
+
+.detail-list__item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: var(--spacing-3);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.detail-list__item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.detail-list__item dt {
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+}
+
+.detail-list__item dd {
+    color: var(--color-text);
+    text-align: right;
+}
+
+.user-inline {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+}
+
+.text-muted {
+    color: var(--color-text-muted);
+}
+
+.text-secondary {
+    color: var(--color-text-secondary);
+}
+
+.label-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-2);
+}
+
+.label-badge {
+    display: inline-block;
+    padding: var(--spacing-1) var(--spacing-2);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    border: 1px solid;
+}
+
+.empty-state-small {
+    padding: var(--spacing-6);
+    text-align: center;
+    color: var(--color-text-secondary);
+}
+
+.data-table__row--clickable {
+    cursor: pointer;
+}
+
+.data-table__row--clickable:hover {
+    background-color: var(--color-bg-hover);
+}
+
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-2);
+}
+
+.breadcrumb__link {
+    color: var(--color-text-secondary);
+    text-decoration: none;
+}
+
+.breadcrumb__link:hover {
+    color: var(--color-primary);
+}
+
+.breadcrumb__separator {
+    color: var(--color-text-muted);
+}
+
+.breadcrumb__current {
+    color: var(--color-text);
+}
+</style>
+{% endblock %}

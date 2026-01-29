@@ -27,6 +27,9 @@ from groundwork.views import (
     auth_router as auth_view_router,
 )
 from groundwork.views import (
+    issues_router as issues_view_router,
+)
+from groundwork.views import (
     profile_router as profile_view_router,
 )
 from groundwork.views import (
@@ -139,6 +142,7 @@ def create_app() -> FastAPI:
     app.include_router(auth_view_router, tags=["auth-views"])
     app.include_router(profile_view_router, tags=["profile-views"])
     app.include_router(projects_view_router, tags=["projects-views"])
+    app.include_router(issues_view_router, tags=["issues-views"])
     app.include_router(users_view_router, tags=["users-views"])
     app.include_router(roles_view_router, tags=["roles-views"])
     app.include_router(placeholder_view_router, tags=["placeholder-views"])

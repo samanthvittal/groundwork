@@ -290,6 +290,22 @@ async def test_archive_project(db_session: AsyncSession, test_project: Project) 
 
 
 @pytest.mark.asyncio
+async def test_restore_project(db_session: AsyncSession, test_project: Project) -> None:
+    """ProjectService.restore_project should restore archived project to active."""
+    service = ProjectService(db_session)
+
+    # First archive the project
+    await service.archive_project(test_project.id)
+
+    # Then restore it
+    project = await service.restore_project(test_project.id)
+
+    assert project is not None
+    assert project.status == ProjectStatus.ACTIVE
+    assert project.archived_at is None
+
+
+@pytest.mark.asyncio
 async def test_delete_project(db_session: AsyncSession, test_project: Project) -> None:
     """ProjectService.delete_project should soft delete project."""
     service = ProjectService(db_session)

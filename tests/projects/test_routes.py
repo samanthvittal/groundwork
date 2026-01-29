@@ -512,6 +512,102 @@ async def test_archive_project_success(
 
 
 # =============================================================================
+# POST /api/v1/projects/{id}/restore - Restore archived project
+# =============================================================================
+
+
+@pytest.mark.asyncio
+async def test_restore_project_success(
+    app: FastAPI, mock_db: AsyncMock, mock_user: MagicMock, mock_project: MagicMock
+) -> None:
+    """POST /projects/{id}/restore should restore archived project."""
+    app.dependency_overrides[get_db] = lambda: mock_db
+    app.dependency_overrides[get_current_user] = lambda: mock_user
+
+    # Set project as archived initially
+    mock_project.status = ProjectStatus.ARCHIVED
+    restored_project = MagicMock()
+    restored_project.id = mock_project.id
+    restored_project.key = mock_project.key
+    restored_project.name = mock_project.name
+    restored_project.description = mock_project.description
+    restored_project.visibility = mock_project.visibility
+    restored_project.status = ProjectStatus.ACTIVE
+    restored_project.owner_id = mock_project.owner_id
+    restored_project.created_at = mock_project.created_at
+    restored_project.updated_at = mock_project.updated_at
+    restored_project.archived_at = None
+    restored_project.owner = mock_project.owner
+    restored_project.members = mock_project.members
+    restored_project.member_count = mock_project.member_count
+
+    with patch("groundwork.projects.routes.ProjectService") as mock_service_class:
+        mock_service = AsyncMock()
+        mock_service.get_project.return_value = mock_project
+        mock_service.user_is_owner.return_value = True
+        mock_service.restore_project.return_value = restored_project
+        mock_service_class.return_value = mock_service
+
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            response = await client.post(f"/api/v1/projects/{mock_project.id}/restore")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "active"
+
+
+@pytest.mark.asyncio
+async def test_restore_project_not_archived(
+    app: FastAPI, mock_db: AsyncMock, mock_user: MagicMock, mock_project: MagicMock
+) -> None:
+    """POST /projects/{id}/restore should return 400 if project is not archived."""
+    app.dependency_overrides[get_db] = lambda: mock_db
+    app.dependency_overrides[get_current_user] = lambda: mock_user
+
+    # Project is already active
+    mock_project.status = ProjectStatus.ACTIVE
+
+    with patch("groundwork.projects.routes.ProjectService") as mock_service_class:
+        mock_service = AsyncMock()
+        mock_service.get_project.return_value = mock_project
+        mock_service_class.return_value = mock_service
+
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            response = await client.post(f"/api/v1/projects/{mock_project.id}/restore")
+
+    assert response.status_code == 400
+    assert "not archived" in response.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_restore_project_forbidden(
+    app: FastAPI, mock_db: AsyncMock, mock_user: MagicMock, mock_project: MagicMock
+) -> None:
+    """POST /projects/{id}/restore should return 403 for non-owner."""
+    app.dependency_overrides[get_db] = lambda: mock_db
+    app.dependency_overrides[get_current_user] = lambda: mock_user
+
+    mock_project.status = ProjectStatus.ARCHIVED
+
+    with patch("groundwork.projects.routes.ProjectService") as mock_service_class:
+        mock_service = AsyncMock()
+        mock_service.get_project.return_value = mock_project
+        mock_service.user_is_owner.return_value = False
+        mock_service_class.return_value = mock_service
+
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            response = await client.post(f"/api/v1/projects/{mock_project.id}/restore")
+
+    assert response.status_code == 403
+
+
+# =============================================================================
 # GET /api/v1/projects/{id}/members - List project members
 # =============================================================================
 

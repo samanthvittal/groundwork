@@ -231,6 +231,46 @@ async def archive_project(
     return ProjectDetailResponse.model_validate(project)
 
 
+@router.post("/{project_id}/restore", response_model=ProjectDetailResponse)
+async def restore_project(
+    project_id: str,
+    current_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> ProjectDetailResponse:
+    """Restore an archived project.
+
+    Requires owner permission on the project.
+    """
+    uuid = parse_uuid(project_id)
+    service = ProjectService(db)
+
+    # Check project exists and is archived
+    project = await service.get_project(uuid)
+    if project is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found",
+        )
+
+    if project.status != ProjectStatus.ARCHIVED:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Project is not archived",
+        )
+
+    # Only owner can restore
+    if not current_user.is_admin:
+        is_owner = await service.user_is_owner(uuid, current_user.id)
+        if not is_owner:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only the project owner can restore the project",
+            )
+
+    restored = await service.restore_project(uuid)
+    return ProjectDetailResponse.model_validate(restored)
+
+
 @router.delete("/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_project(
     project_id: str,

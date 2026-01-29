@@ -1,0 +1,228 @@
+{% extends "layouts/app.html" %}
+
+{% block title %}Create Issue - {{ project.key }}{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+    <div class="page-header__content">
+        <nav class="breadcrumb">
+            <a href="/projects" class="breadcrumb__link">Projects</a>
+            <span class="breadcrumb__separator">/</span>
+            <a href="/projects/{{ project.id }}" class="breadcrumb__link">{{ project.key }}</a>
+            <span class="breadcrumb__separator">/</span>
+            <a href="/projects/{{ project.key }}/issues" class="breadcrumb__link">Issues</a>
+            <span class="breadcrumb__separator">/</span>
+            <span class="breadcrumb__current">Create</span>
+        </nav>
+        <h1 class="page-header__title">
+            {% if parent_issue %}
+            Create Subtask for {{ parent_issue.key }}
+            {% else %}
+            Create Issue
+            {% endif %}
+        </h1>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="create-issue">
+    <div class="card">
+        <div class="card__body">
+            <form method="post" class="form">
+                {% if parent_issue %}
+                <input type="hidden" name="parent_id" value="{{ parent_issue.id }}">
+                <div class="parent-info">
+                    <span class="parent-label">Parent Issue:</span>
+                    <a href="/issues/{{ parent_issue.key }}" class="issue-key">{{ parent_issue.key }}</a>
+                    <span>{{ parent_issue.title }}</span>
+                </div>
+                {% endif %}
+
+                <div class="form-group">
+                    <label class="form-label" for="title">Title <span class="required">*</span></label>
+                    <input type="text" id="title" name="title" class="input {% if errors.title %}input--error{% endif %}"
+                           value="{{ title or '' }}" placeholder="Issue title" required maxlength="500" autofocus>
+                    {% if errors.title %}
+                    <span class="form-error">{{ errors.title }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="type_id">Type <span class="required">*</span></label>
+                        <select id="type_id" name="type_id" class="input {% if errors.type_id %}input--error{% endif %}" required>
+                            <option value="">Select type...</option>
+                            {% for t in issue_types %}
+                            <option value="{{ t.id }}" {% if selected_type == t.id|string %}selected{% endif %}>
+                                {{ t.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        {% if errors.type_id %}
+                        <span class="form-error">{{ errors.type_id }}</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="priority">Priority</label>
+                        <select id="priority" name="priority" class="input">
+                            {% for p in priorities %}
+                            <option value="{{ p.value }}" {% if (selected_priority or 'medium') == p.value %}selected{% endif %}>
+                                {{ p.value|capitalize }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="status_id">Status</label>
+                        <select id="status_id" name="status_id" class="input">
+                            <option value="">Default (To Do)</option>
+                            {% for s in statuses %}
+                            <option value="{{ s.id }}" {% if selected_status == s.id|string %}selected{% endif %}>
+                                {{ s.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="assignee_id">Assignee</label>
+                        <select id="assignee_id" name="assignee_id" class="input">
+                            <option value="">Unassigned</option>
+                            {% for member in members %}
+                            <option value="{{ member.user.id }}" {% if selected_assignee == member.user.id|string %}selected{% endif %}>
+                                {{ member.user.full_name }} ({{ member.user.email }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="description">Description</label>
+                    <textarea id="description" name="description" class="input textarea" rows="8"
+                              placeholder="Add a description...">{{ description or '' }}</textarea>
+                </div>
+
+                <div class="form-actions">
+                    <a href="/projects/{{ project.key }}/issues" class="btn btn--secondary">Cancel</a>
+                    <button type="submit" class="btn btn--primary">Create Issue</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.create-issue {
+    max-width: 800px;
+}
+
+.parent-info {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    padding: var(--spacing-3);
+    background-color: var(--color-bg-secondary);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-4);
+    font-size: var(--font-size-sm);
+}
+
+.parent-label {
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+}
+
+.issue-key {
+    font-family: var(--font-mono);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-primary);
+    text-decoration: none;
+}
+
+.issue-key:hover {
+    text-decoration: underline;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-4);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-4);
+}
+
+@media (max-width: 600px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-1);
+}
+
+.form-label {
+    font-weight: var(--font-weight-medium);
+    font-size: var(--font-size-sm);
+}
+
+.required {
+    color: var(--color-error);
+}
+
+.form-error {
+    color: var(--color-error);
+    font-size: var(--font-size-xs);
+}
+
+.textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-3);
+    padding-top: var(--spacing-4);
+    border-top: 1px solid var(--color-border);
+}
+
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-2);
+}
+
+.breadcrumb__link {
+    color: var(--color-text-secondary);
+    text-decoration: none;
+}
+
+.breadcrumb__link:hover {
+    color: var(--color-primary);
+}
+
+.breadcrumb__separator {
+    color: var(--color-text-muted);
+}
+
+.breadcrumb__current {
+    color: var(--color-text);
+}
+</style>
+{% endblock %}

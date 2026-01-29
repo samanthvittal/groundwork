@@ -6,6 +6,7 @@ from sqlalchemy.orm import selectinload
 
 from groundwork.auth.models import Permission, Role
 from groundwork.core.logging import get_logger
+from groundwork.issues.seed import seed_issue_defaults
 
 logger = get_logger(__name__)
 
@@ -62,6 +63,9 @@ async def seed_defaults(db: AsyncSession) -> None:
 
     # Then create roles with their permissions
     await _seed_roles(db, permissions_map)
+
+    # Seed issue types and statuses
+    await seed_issue_defaults(db)
 
     await db.flush()
     logger.info("Default roles and permissions seeded successfully")

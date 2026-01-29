@@ -173,6 +173,10 @@ class ProjectService:
         """Archive a project."""
         return await self.update_project(project_id, status=ProjectStatus.ARCHIVED)
 
+    async def restore_project(self, project_id: UUID) -> Project | None:
+        """Restore an archived project to active status."""
+        return await self.update_project(project_id, status=ProjectStatus.ACTIVE)
+
     async def delete_project(self, project_id: UUID) -> bool:
         """Soft delete a project.
 

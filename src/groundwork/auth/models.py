@@ -12,6 +12,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from groundwork.core.database import Base
 
 if TYPE_CHECKING:
+    from groundwork.issues.models import Issue
     from groundwork.projects.models import Project, ProjectMember
 
 # Association table for Role <-> Permission many-to-many
@@ -104,6 +105,12 @@ class User(Base):
     owned_projects: Mapped[list["Project"]] = relationship(back_populates="owner")
     project_memberships: Mapped[list["ProjectMember"]] = relationship(
         back_populates="user"
+    )
+    assigned_issues: Mapped[list["Issue"]] = relationship(
+        foreign_keys="Issue.assignee_id", back_populates="assignee"
+    )
+    reported_issues: Mapped[list["Issue"]] = relationship(
+        foreign_keys="Issue.reporter_id", back_populates="reporter"
     )
 
     @property

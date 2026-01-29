@@ -1,0 +1,381 @@
+{% extends "layouts/app.html" %}
+
+{% block title %}Issues - {{ project.key }}{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+    <div class="page-header__content">
+        <nav class="breadcrumb">
+            <a href="/projects" class="breadcrumb__link">Projects</a>
+            <span class="breadcrumb__separator">/</span>
+            <a href="/projects/{{ project.id }}" class="breadcrumb__link">{{ project.key }}</a>
+            <span class="breadcrumb__separator">/</span>
+            <span class="breadcrumb__current">Issues</span>
+        </nav>
+        <h1 class="page-header__title">Issues</h1>
+    </div>
+    <div class="page-header__actions">
+        {% if can_create %}
+        <a href="/projects/{{ project.key }}/issues/create" class="btn btn--primary">
+            <svg class="btn__icon" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+            </svg>
+            New Issue
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="issues-list">
+    {% if success %}
+    <div class="alert alert--success" style="margin-bottom: var(--spacing-4);">
+        <div class="alert__content">
+            <p class="alert__message">{{ success }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if error %}
+    <div class="alert alert--error" style="margin-bottom: var(--spacing-4);">
+        <div class="alert__content">
+            <p class="alert__message">{{ error }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Filters -->
+    <div class="card" style="margin-bottom: var(--spacing-4);">
+        <div class="card__body">
+            <form method="get" class="filters-form">
+                <div class="filters-row">
+                    <div class="filter-group">
+                        <label class="filter-label">Search</label>
+                        <input type="text" name="q" value="{{ filters.q or '' }}"
+                               placeholder="Search issues..." class="input input--sm">
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Status</label>
+                        <select name="status" class="input input--sm">
+                            <option value="">All Statuses</option>
+                            {% for s in statuses %}
+                            <option value="{{ s.id }}" {% if filters.status == s.id|string %}selected{% endif %}>{{ s.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Type</label>
+                        <select name="type" class="input input--sm">
+                            <option value="">All Types</option>
+                            {% for t in issue_types %}
+                            <option value="{{ t.id }}" {% if filters.type == t.id|string %}selected{% endif %}>{{ t.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Priority</label>
+                        <select name="priority" class="input input--sm">
+                            <option value="">All Priorities</option>
+                            {% for p in priorities %}
+                            <option value="{{ p.value }}" {% if filters.priority == p.value %}selected{% endif %}>{{ p.value|capitalize }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Assignee</label>
+                        <select name="assignee" class="input input--sm">
+                            <option value="">All</option>
+                            <option value="me" {% if filters.assignee == 'me' %}selected{% endif %}>Assigned to me</option>
+                            <option value="unassigned" {% if filters.assignee == 'unassigned' %}selected{% endif %}>Unassigned</option>
+                        </select>
+                    </div>
+                    <div class="filter-group filter-group--actions">
+                        <button type="submit" class="btn btn--secondary btn--sm">Filter</button>
+                        <a href="/projects/{{ project.key }}/issues" class="btn btn--ghost btn--sm">Clear</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Issues Table -->
+    <div class="card">
+        <div class="card__body card__body--no-padding">
+            {% if issues %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 100px;">Key</th>
+                        <th>Title</th>
+                        <th style="width: 100px;">Type</th>
+                        <th style="width: 120px;">Status</th>
+                        <th style="width: 100px;">Priority</th>
+                        <th style="width: 150px;">Assignee</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for issue in issues %}
+                    <tr class="data-table__row data-table__row--clickable" onclick="window.location='/issues/{{ issue.key }}'">
+                        <td>
+                            <a href="/issues/{{ issue.key }}" class="issue-key">{{ issue.key }}</a>
+                        </td>
+                        <td class="issue-title">
+                            {{ issue.title }}
+                        </td>
+                        <td>
+                            <span class="issue-type-badge" style="background-color: {{ issue.type.color }}20; color: {{ issue.type.color }};">
+                                {{ issue.type.name }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="status-badge status-badge--{{ issue.status.category.value }}">
+                                {{ issue.status.name }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="priority-badge priority-badge--{{ issue.priority.value }}">
+                                {{ issue.priority.value|capitalize }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if issue.assignee %}
+                            <div class="user-cell">
+                                <div class="avatar avatar--xs">
+                                    {% if issue.assignee.avatar_path %}
+                                    <img src="{{ issue.assignee.avatar_path }}" alt="{{ issue.assignee.full_name }}">
+                                    {% else %}
+                                    {{ issue.assignee.first_name[0] }}{{ issue.assignee.last_name[0] }}
+                                    {% endif %}
+                                </div>
+                                <span>{{ issue.assignee.full_name }}</span>
+                            </div>
+                            {% else %}
+                            <span class="text-muted">Unassigned</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            {% if pagination %}
+            <div class="card__footer">
+                <div class="pagination">
+                    <span class="pagination__info">
+                        Showing {{ pagination.start }} - {{ pagination.end }} of {{ pagination.total }}
+                    </span>
+                    <div class="pagination__nav">
+                        {% if pagination.has_prev %}
+                        <a href="?page={{ pagination.page - 1 }}{% if filters.q %}&q={{ filters.q }}{% endif %}{% if filters.status %}&status={{ filters.status }}{% endif %}{% if filters.type %}&type={{ filters.type }}{% endif %}{% if filters.priority %}&priority={{ filters.priority }}{% endif %}{% if filters.assignee %}&assignee={{ filters.assignee }}{% endif %}" class="btn btn--ghost btn--sm">Previous</a>
+                        {% endif %}
+                        {% if pagination.has_next %}
+                        <a href="?page={{ pagination.page + 1 }}{% if filters.q %}&q={{ filters.q }}{% endif %}{% if filters.status %}&status={{ filters.status }}{% endif %}{% if filters.type %}&type={{ filters.type }}{% endif %}{% if filters.priority %}&priority={{ filters.priority }}{% endif %}{% if filters.assignee %}&assignee={{ filters.assignee }}{% endif %}" class="btn btn--ghost btn--sm">Next</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-state__icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                </div>
+                <h3 class="empty-state__title">No issues yet</h3>
+                <p class="empty-state__description">Get started by creating your first issue.</p>
+                {% if can_create %}
+                <a href="/projects/{{ project.key }}/issues/create" class="btn btn--primary">Create Issue</a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.filters-form {
+    width: 100%;
+}
+
+.filters-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-3);
+    align-items: flex-end;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-1);
+    min-width: 120px;
+}
+
+.filter-group--actions {
+    display: flex;
+    flex-direction: row;
+    gap: var(--spacing-2);
+    margin-left: auto;
+}
+
+.filter-label {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+}
+
+.issue-key {
+    font-family: var(--font-mono);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-primary);
+    text-decoration: none;
+}
+
+.issue-key:hover {
+    text-decoration: underline;
+}
+
+.issue-title {
+    max-width: 400px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.issue-type-badge {
+    display: inline-block;
+    padding: var(--spacing-1) var(--spacing-2);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+}
+
+.status-badge {
+    display: inline-block;
+    padding: var(--spacing-1) var(--spacing-2);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+}
+
+.status-badge--todo {
+    background-color: var(--color-secondary-light);
+    color: var(--color-text-secondary);
+}
+
+.status-badge--in_progress {
+    background-color: var(--color-info-light);
+    color: var(--color-info);
+}
+
+.status-badge--done {
+    background-color: var(--color-success-light);
+    color: var(--color-success);
+}
+
+.priority-badge {
+    display: inline-block;
+    padding: var(--spacing-1) var(--spacing-2);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+}
+
+.priority-badge--critical {
+    background-color: #fee2e2;
+    color: #dc2626;
+}
+
+.priority-badge--high {
+    background-color: #ffedd5;
+    color: #ea580c;
+}
+
+.priority-badge--medium {
+    background-color: #fef3c7;
+    color: #d97706;
+}
+
+.priority-badge--low {
+    background-color: #dbeafe;
+    color: #2563eb;
+}
+
+.priority-badge--none {
+    background-color: var(--color-secondary-light);
+    color: var(--color-text-secondary);
+}
+
+.user-cell {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+}
+
+.text-muted {
+    color: var(--color-text-muted);
+}
+
+.data-table__row--clickable {
+    cursor: pointer;
+}
+
+.data-table__row--clickable:hover {
+    background-color: var(--color-bg-hover);
+}
+
+.pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-3) var(--spacing-4);
+}
+
+.pagination__info {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+.pagination__nav {
+    display: flex;
+    gap: var(--spacing-2);
+}
+
+.empty-state {
+    padding: var(--spacing-12);
+    text-align: center;
+}
+
+.empty-state__icon {
+    color: var(--color-text-muted);
+    margin-bottom: var(--spacing-4);
+}
+
+.empty-state__title {
+    margin-bottom: var(--spacing-2);
+    font-size: var(--font-size-lg);
+}
+
+.empty-state__description {
+    color: var(--color-text-secondary);
+    margin-bottom: var(--spacing-4);
+}
+
+@media (max-width: 768px) {
+    .filters-row {
+        flex-direction: column;
+    }
+
+    .filter-group {
+        width: 100%;
+    }
+
+    .filter-group--actions {
+        margin-left: 0;
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}

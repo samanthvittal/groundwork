@@ -1,0 +1,39 @@
+<tr class="data-table__row data-table__row--clickable" onclick="window.location='/issues/{{ issue.key }}'">
+    <td>
+        <a href="/issues/{{ issue.key }}" class="issue-key">{{ issue.key }}</a>
+    </td>
+    <td class="issue-title">
+        {{ issue.title }}
+    </td>
+    <td>
+        <span class="issue-type-badge" style="background-color: {{ issue.type.color }}20; color: {{ issue.type.color }};">
+            {{ issue.type.name }}
+        </span>
+    </td>
+    <td>
+        <span class="status-badge status-badge--{{ issue.status.category.value }}">
+            {{ issue.status.name }}
+        </span>
+    </td>
+    <td>
+        <span class="priority-badge priority-badge--{{ issue.priority.value }}">
+            {{ issue.priority.value|capitalize }}
+        </span>
+    </td>
+    <td>
+        {% if issue.assignee %}
+        <div class="user-cell">
+            <div class="avatar avatar--xs">
+                {% if issue.assignee.avatar_path %}
+                <img src="{{ issue.assignee.avatar_path }}" alt="{{ issue.assignee.full_name }}">
+                {% else %}
+                {{ issue.assignee.first_name[0] }}{{ issue.assignee.last_name[0] }}
+                {% endif %}
+            </div>
+            <span>{{ issue.assignee.full_name }}</span>
+        </div>
+        {% else %}
+        <span class="text-muted">Unassigned</span>
+        {% endif %}
+    </td>
+</tr>

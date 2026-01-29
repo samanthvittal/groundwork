@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from groundwork.auth import models as auth_models  # noqa: F401
 from groundwork.core.config import get_settings
 from groundwork.core.database import Base
+from groundwork.issues import models as issues_models  # noqa: F401
 from groundwork.projects import models as projects_models  # noqa: F401
 from groundwork.setup import models as setup_models  # noqa: F401
 

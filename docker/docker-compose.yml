@@ -24,6 +24,7 @@ services:
       - ../src:/app/src
       - ../tests:/app/tests
       - ../alembic:/app/alembic
+      - ../alembic.ini:/app/alembic.ini
     ports:
       - "8000:8000"
     depends_on:

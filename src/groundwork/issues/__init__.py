@@ -9,6 +9,12 @@ from groundwork.issues.models import (
     Status,
     StatusCategory,
 )
+from groundwork.issues.services import (
+    IssueService,
+    IssueTypeService,
+    LabelService,
+    StatusService,
+)
 
 __all__ = [
     "Issue",
@@ -18,4 +24,8 @@ __all__ = [
     "Priority",
     "Status",
     "StatusCategory",
+    "IssueService",
+    "IssueTypeService",
+    "LabelService",
+    "StatusService",
 ]

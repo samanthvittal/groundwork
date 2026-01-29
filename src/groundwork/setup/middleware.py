@@ -18,6 +18,9 @@ if TYPE_CHECKING:
 # Module-level session factory override for testing
 _session_factory_override: "async_sessionmaker[AsyncSession] | None" = None
 
+# Module-level reference to the middleware instance for cache reset
+_middleware_instance: "SetupCheckMiddleware | None" = None
+
 
 def set_session_factory_override(
     factory: "async_sessionmaker[AsyncSession] | None",
@@ -29,6 +32,15 @@ def set_session_factory_override(
     """
     global _session_factory_override
     _session_factory_override = factory
+
+
+def reset_setup_cache() -> None:
+    """Reset the setup middleware's cached status.
+
+    Call this after setup completion so the middleware re-checks the database.
+    """
+    if _middleware_instance is not None:
+        _middleware_instance.reset_cache()
 
 
 def _get_session_factory() -> "async_sessionmaker[AsyncSession]":
@@ -65,6 +77,10 @@ class SetupCheckMiddleware(BaseHTTPMiddleware):
         """
         super().__init__(app)
         self._setup_completed: bool | None = None  # Cache status
+
+        # Store reference for reset_setup_cache()
+        global _middleware_instance
+        _middleware_instance = self
 
     def reset_cache(self) -> None:
         """Reset the cached setup status.

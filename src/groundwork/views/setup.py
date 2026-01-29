@@ -11,6 +11,7 @@ from sqlalchemy.orm import selectinload
 from groundwork.auth.models import Role
 from groundwork.core.database import get_db
 from groundwork.core.templates import get_templates
+from groundwork.setup.middleware import reset_setup_cache
 from groundwork.setup.services import SetupService
 
 router = APIRouter()
@@ -205,6 +206,7 @@ async def setup_smtp_submit(
                 smtp_from_address=smtp_from_address,
             )
         await service.complete_setup()
+        reset_setup_cache()
         return RedirectResponse(url="/setup/complete", status_code=303)
     except Exception as e:
         templates = get_templates()
@@ -232,6 +234,7 @@ async def setup_complete(
     status = await service.get_setup_status()
     if not status["setup_completed"]:
         await service.complete_setup()
+        reset_setup_cache()
 
     config = await service._get_instance_config()
 

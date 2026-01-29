@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from groundwork.core.database import get_db
+from groundwork.setup.middleware import reset_setup_cache
 from groundwork.setup.schemas import (
     AdminCreateRequest,
     AdminUserResponse,
@@ -170,4 +171,5 @@ async def complete_setup(
             detail="Prerequisites not met: instance settings and admin user required",
         )
 
+    reset_setup_cache()
     return InstanceConfigResponse.model_validate(config)

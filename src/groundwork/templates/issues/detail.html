@@ -64,9 +64,7 @@
                 </div>
                 <div class="card__body">
                     {% if issue.description %}
-                    <div class="issue-description">
-                        {{ issue.description }}
-                    </div>
+                    <div class="issue-description">{{ issue.description }}</div>
                     {% else %}
                     <p class="text-secondary">No description provided.</p>
                     {% endif %}
@@ -286,6 +284,14 @@
     font-weight: var(--font-weight-medium);
     color: var(--color-text-secondary);
     margin-right: var(--spacing-2);
+}
+
+.issue-detail .card__header {
+    background-color: var(--color-bg-secondary);
+}
+
+.issue-detail .card__title {
+    font-size: var(--font-size-sm);
 }
 
 .issue-description {

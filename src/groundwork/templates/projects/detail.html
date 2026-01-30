@@ -13,6 +13,25 @@
         <h1 class="page-header__title">
             <span class="project-key-badge">{{ project.key }}</span>
             {{ project.name }}
+            {% if project.status.value == 'active' %}
+            <span class="badge badge--success" style="font-size: var(--font-size-xs); vertical-align: middle; margin-left: var(--spacing-2);">Active</span>
+            {% elif project.status.value == 'archived' %}
+            <span class="badge badge--secondary" style="font-size: var(--font-size-xs); vertical-align: middle; margin-left: var(--spacing-2);">Archived</span>
+            {% else %}
+            <span class="badge badge--error" style="font-size: var(--font-size-xs); vertical-align: middle; margin-left: var(--spacing-2);">Deleted</span>
+            {% endif %}
+            <span class="visibility-icon" title="{{ project.visibility.value|capitalize }}">
+                {% if project.visibility.value == 'private' %}
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+                    <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                </svg>
+                {% else %}
+                <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                    <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+                </svg>
+                {% endif %}
+            </span>
         </h1>
         {% if project.description %}
         <p class="page-header__description">{{ project.description }}</p>
@@ -65,52 +84,8 @@
 
     <div class="project-detail__grid">
         <div class="project-detail__main">
+            <!-- Issues -->
             <div class="card">
-                <div class="card__header">
-                    <h2 class="card__title">Project Details</h2>
-                </div>
-                <div class="card__body">
-                    <dl class="detail-list">
-                        <div class="detail-list__item">
-                            <dt>Key</dt>
-                            <dd><span class="project-key">{{ project.key }}</span></dd>
-                        </div>
-                        <div class="detail-list__item">
-                            <dt>Status</dt>
-                            <dd>
-                                {% if project.status.value == 'active' %}
-                                <span class="badge badge--success">Active</span>
-                                {% elif project.status.value == 'archived' %}
-                                <span class="badge badge--secondary">Archived</span>
-                                {% else %}
-                                <span class="badge badge--error">Deleted</span>
-                                {% endif %}
-                            </dd>
-                        </div>
-                        <div class="detail-list__item">
-                            <dt>Visibility</dt>
-                            <dd>
-                                <span class="badge badge--{% if project.visibility.value == 'private' %}secondary{% elif project.visibility.value == 'internal' %}info{% else %}success{% endif %}">
-                                    {{ project.visibility.value|capitalize }}
-                                </span>
-                            </dd>
-                        </div>
-                        <div class="detail-list__item">
-                            <dt>Created</dt>
-                            <dd>{{ project.created_at.strftime('%Y-%m-%d %H:%M') }}</dd>
-                        </div>
-                        {% if project.archived_at %}
-                        <div class="detail-list__item">
-                            <dt>Archived</dt>
-                            <dd>{{ project.archived_at.strftime('%Y-%m-%d %H:%M') }}</dd>
-                        </div>
-                        {% endif %}
-                    </dl>
-                </div>
-            </div>
-
-            <!-- Issues (inline) -->
-            <div class="card" style="margin-top: var(--spacing-4);">
                 <div class="card__header">
                     <h2 class="card__title">Issues{% if issues_pagination %} ({{ issues_pagination.total }}){% endif %}</h2>
                     {% if can_create_issue %}
@@ -186,10 +161,10 @@
                             </span>
                             <div class="pagination__controls">
                                 {% if issues_pagination.has_prev %}
-                                <a href="?page={{ issues_pagination.page - 1 }}" class="btn btn--ghost btn--sm">Previous</a>
+                                <a href="?page={{ issues_pagination.page - 1 }}" class="btn btn--secondary btn--sm">Previous</a>
                                 {% endif %}
                                 {% if issues_pagination.has_next %}
-                                <a href="?page={{ issues_pagination.page + 1 }}" class="btn btn--ghost btn--sm">Next</a>
+                                <a href="?page={{ issues_pagination.page + 1 }}" class="btn btn--secondary btn--sm">Next</a>
                                 {% endif %}
                             </div>
                         </div>
@@ -289,38 +264,12 @@
     margin-right: var(--spacing-2);
 }
 
-.project-key {
-    font-family: var(--font-mono);
-    font-weight: var(--font-weight-medium);
-    color: var(--color-primary);
-}
-
-.detail-list {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-3);
-}
-
-.detail-list__item {
-    display: flex;
-    justify-content: space-between;
+.visibility-icon {
+    display: inline-flex;
     align-items: center;
-    padding-bottom: var(--spacing-3);
-    border-bottom: 1px solid var(--color-border);
-}
-
-.detail-list__item:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-}
-
-.detail-list__item dt {
-    font-weight: var(--font-weight-medium);
-    color: var(--color-text-secondary);
-}
-
-.detail-list__item dd {
-    color: var(--color-text);
+    vertical-align: middle;
+    margin-left: var(--spacing-1);
+    color: var(--color-text-muted);
 }
 
 /* Issue table styles */

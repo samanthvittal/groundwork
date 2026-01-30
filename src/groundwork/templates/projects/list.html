@@ -105,13 +105,13 @@
                             <td>{{ project.created_at.strftime('%Y-%m-%d') }}</td>
                             <td class="table__actions-col">
                                 <div class="table-actions">
-                                    <a href="/projects/{{ project.key }}/issues" class="btn btn--ghost btn--sm" title="Issues">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                                    <a href="/projects/{{ project.key }}/issues" class="btn btn--secondary btn--sm" title="Issues">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                         </svg>
                                     </a>
-                                    <a href="/projects/{{ project.id }}" class="btn btn--ghost btn--sm" title="View">
-                                        <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+                                    <a href="/projects/{{ project.id }}" class="btn btn--secondary btn--sm" title="View">
+                                        <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14">
                                             <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
                                             <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
                                         </svg>
@@ -132,10 +132,10 @@
                     </span>
                     <div class="pagination__controls">
                         {% if pagination.has_prev %}
-                        <a href="/projects?page={{ pagination.page - 1 }}{% if search %}&search={{ search }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}" class="btn btn--ghost btn--sm">Previous</a>
+                        <a href="/projects?page={{ pagination.page - 1 }}{% if search %}&search={{ search }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}" class="btn btn--secondary btn--sm">Previous</a>
                         {% endif %}
                         {% if pagination.has_next %}
-                        <a href="/projects?page={{ pagination.page + 1 }}{% if search %}&search={{ search }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}" class="btn btn--ghost btn--sm">Next</a>
+                        <a href="/projects?page={{ pagination.page + 1 }}{% if search %}&search={{ search }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}" class="btn btn--secondary btn--sm">Next</a>
                         {% endif %}
                     </div>
                 </div>

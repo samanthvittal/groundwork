@@ -98,7 +98,7 @@
     <div class="card">
         <div class="card__body card__body--no-padding">
             {% if issues %}
-            <table class="data-table">
+            <table class="table">
                 <thead>
                     <tr>
                         <th style="width: 100px;">Key</th>
@@ -111,7 +111,7 @@
                 </thead>
                 <tbody>
                     {% for issue in issues %}
-                    <tr class="data-table__row data-table__row--clickable" onclick="window.location='/issues/{{ issue.key }}'">
+                    <tr class="table__row--clickable" onclick="window.location='/issues/{{ issue.key }}'">
                         <td>
                             <a href="/issues/{{ issue.key }}" class="issue-key">{{ issue.key }}</a>
                         </td>
@@ -162,10 +162,10 @@
                     </span>
                     <div class="pagination__nav">
                         {% if pagination.has_prev %}
-                        <a href="?page={{ pagination.page - 1 }}{% if filters.q %}&q={{ filters.q }}{% endif %}{% if filters.status %}&status={{ filters.status }}{% endif %}{% if filters.type %}&type={{ filters.type }}{% endif %}{% if filters.priority %}&priority={{ filters.priority }}{% endif %}{% if filters.assignee %}&assignee={{ filters.assignee }}{% endif %}" class="btn btn--ghost btn--sm">Previous</a>
+                        <a href="?page={{ pagination.page - 1 }}{% if filters.q %}&q={{ filters.q }}{% endif %}{% if filters.status %}&status={{ filters.status }}{% endif %}{% if filters.type %}&type={{ filters.type }}{% endif %}{% if filters.priority %}&priority={{ filters.priority }}{% endif %}{% if filters.assignee %}&assignee={{ filters.assignee }}{% endif %}" class="btn btn--secondary btn--sm">Previous</a>
                         {% endif %}
                         {% if pagination.has_next %}
-                        <a href="?page={{ pagination.page + 1 }}{% if filters.q %}&q={{ filters.q }}{% endif %}{% if filters.status %}&status={{ filters.status }}{% endif %}{% if filters.type %}&type={{ filters.type }}{% endif %}{% if filters.priority %}&priority={{ filters.priority }}{% endif %}{% if filters.assignee %}&assignee={{ filters.assignee }}{% endif %}" class="btn btn--ghost btn--sm">Next</a>
+                        <a href="?page={{ pagination.page + 1 }}{% if filters.q %}&q={{ filters.q }}{% endif %}{% if filters.status %}&status={{ filters.status }}{% endif %}{% if filters.type %}&type={{ filters.type }}{% endif %}{% if filters.priority %}&priority={{ filters.priority }}{% endif %}{% if filters.assignee %}&assignee={{ filters.assignee }}{% endif %}" class="btn btn--secondary btn--sm">Next</a>
                         {% endif %}
                     </div>
                 </div>
@@ -307,11 +307,11 @@
     color: var(--color-text-muted);
 }
 
-.data-table__row--clickable {
+.table__row--clickable {
     cursor: pointer;
 }
 
-.data-table__row--clickable:hover {
+.table__row--clickable:hover {
     background-color: var(--color-bg-hover);
 }
 

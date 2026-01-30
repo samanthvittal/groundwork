@@ -78,7 +78,7 @@
                 <div class="card__header">
                     <h2 class="card__title">Subtasks ({{ subtasks|length }})</h2>
                     {% if can_edit %}
-                    <a href="/projects/{{ issue.project.key }}/issues/create?parent={{ issue.key }}" class="btn btn--ghost btn--sm">
+                    <a href="/projects/{{ issue.project.key }}/issues/create?parent={{ issue.key }}" class="btn btn--secondary btn--sm">
                         <svg class="btn__icon" viewBox="0 0 20 20" fill="currentColor" width="14" height="14">
                             <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
                         </svg>
@@ -88,10 +88,10 @@
                 </div>
                 <div class="card__body card__body--no-padding">
                     {% if subtasks %}
-                    <table class="data-table">
+                    <table class="table">
                         <tbody>
                             {% for subtask in subtasks %}
-                            <tr class="data-table__row data-table__row--clickable" onclick="window.location='/issues/{{ subtask.key }}'">
+                            <tr class="table__row--clickable" onclick="window.location='/issues/{{ subtask.key }}'">
                                 <td style="width: 100px;">
                                     <a href="/issues/{{ subtask.key }}" class="issue-key">{{ subtask.key }}</a>
                                 </td>
@@ -291,6 +291,7 @@
 .issue-description {
     white-space: pre-wrap;
     line-height: 1.6;
+    text-align: left;
 }
 
 .issue-key {
@@ -425,11 +426,11 @@
     color: var(--color-text-secondary);
 }
 
-.data-table__row--clickable {
+.table__row--clickable {
     cursor: pointer;
 }
 
-.data-table__row--clickable:hover {
+.table__row--clickable:hover {
     background-color: var(--color-bg-hover);
 }
 

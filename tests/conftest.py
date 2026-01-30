@@ -12,14 +12,17 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-# Set test environment before importing app
-os.environ.setdefault(
-    "DATABASE_URL",
-    "postgresql+asyncpg://groundwork:groundwork@localhost:5433/groundwork_test",
+# Force test environment before importing app — os.environ[] instead of setdefault
+# to ensure tests never run against the production database (setdefault would be
+# silently overridden by .env values loaded via pydantic-settings).
+# Use DB_HOST env var to support both Docker (db) and local (localhost:5433) runs.
+_db_host = os.environ.get("DB_HOST", "localhost:5433")
+os.environ["DATABASE_URL"] = (
+    f"postgresql+asyncpg://groundwork:groundwork@{_db_host}/groundwork_test"
 )
-os.environ.setdefault("SECRET_KEY", "test-secret-key")
-os.environ.setdefault("ENVIRONMENT", "testing")
-os.environ.setdefault("DEBUG", "false")
+os.environ["SECRET_KEY"] = "test-secret-key"
+os.environ["ENVIRONMENT"] = "testing"
+os.environ["DEBUG"] = "false"
 
 from groundwork.auth import models as auth_models  # noqa: F401
 from groundwork.core.config import get_settings
